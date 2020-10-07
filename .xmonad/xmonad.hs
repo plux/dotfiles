@@ -41,7 +41,7 @@ myWorkspaces = ["1","2","3","4","5","6","7","8","9"]
 --  spawn "sleep 1polybar main"
 
 main = xmonad $ gnomeConfig
-  { terminal             = "termite"
+  { terminal             = "alacritty"
   , modMask              = mod4Mask
   , focusFollowsMouse    = True
   , normalBorderColor    = myNormalBorderColor
