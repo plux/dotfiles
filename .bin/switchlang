@@ -1,0 +1,9 @@
+#!/bin/sh
+
+case `setxkbmap -query | grep layout | awk '{print $2}'` in
+     "us") setxkbmap se ;;
+     "se") setxkbmap us ;;
+     *) setxkbmap se
+esac
+# hacky hack hack to ensure capslock is ctrl
+xmodmap ~/.Xmodmap
