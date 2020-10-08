@@ -16,6 +16,7 @@ import XMonad.Layout.ThreeColumns
 import XMonad.Actions.CycleWS
 import XMonad.Actions.FindEmptyWorkspace
 import XMonad.Hooks.SetWMName
+import Graphics.X11.ExtraTypes.XF86
 
 myNormalBorderColor  = "#000000"
 myFocusedBorderColor = "#93c91d"
@@ -49,9 +50,17 @@ main = xmonad $ gnomeConfig
   , borderWidth          = 2
   , manageHook           = manageHook defaultConfig <+> composeAll myManageHook
 --  , startupHook          = startup
-  } `additionalKeysP` myKeys
+  }
+  `additionalKeysP` myKeysP
+  `additionalKeys` myKeys
 
 myKeys =
+  [ ((0, xF86XK_AudioRaiseVolume), spawn "pactl set-sink-volume 0 +5%")
+  , ((0, xF86XK_AudioLowerVolume), spawn "pactl set-sink-volume 0 -5%")
+  , ((0, xF86XK_AudioMute),        spawn "pactl set-sink-mute 0 toggle")
+  ]
+
+myKeysP =
   [ ("M-S-z", spawn "xsecurelock")
   , ("M-C-h", sendMessage $ pullGroup L)
   , ("M-C-l", sendMessage $ pullGroup R)
