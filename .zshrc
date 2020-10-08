@@ -18,7 +18,7 @@ ZSH_THEME="plux"
 #
 
 ## Aliases
-alias e="emacs -nw -q"
+alias e="emacs -nw -Q"
 
 # Set to this to use case-sensitive completion
 # CASE_SENSITIVE="true"
