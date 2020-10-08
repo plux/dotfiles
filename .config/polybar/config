@@ -58,7 +58,7 @@ font-2 = siji:pixelsize=10;1
 
 modules-left = workspaces
 modules-center = xkeyboard memory cpu eth battery temperature
-modules-right = wlan date 
+modules-right = github wlan date
 
 tray-position = left
 tray-padding = 4
@@ -89,6 +89,32 @@ label-empty-foreground = #707070
 label-urgent-foreground = #ff0000
 ;label-active-underline = #93c91d	
 
+[module/github]
+type = internal/github
+
+; Accessing an access token stored in file
+token = ${file:~/.github_access_token}
+
+; Accessing an access token stored in an environment variable
+;token = ${env:GITHUB_ACCESS_TOKEN}
+
+; The github user for the token (unreleased)
+; If not specified, this module uses the deprecated method of accessing your
+; notifications, which may stop working at some point.
+user = hakan-kivra
+
+; Whether empty notifications should be displayed or not
+empty-notifications = false
+
+; Number of seconds in between requests
+interval = 10
+
+; Github API URL (unreleased)
+; Default: https://api.github.com/
+;api-url = https://hub.example.org/api/v3/
+format-prefix = "github: "
+format-prefix-foreground = ${colors.foreground-alt}
+label = "%notifications%"
 
 [module/xwindow]
 type = internal/xwindow
