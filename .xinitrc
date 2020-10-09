@@ -44,9 +44,11 @@ xset b off
 xset s on
 xset s 600
 # use xsecurelock to lock screen
-xss-lock xsecurelock &
+xss-lock -n /usr/lib/xsecurelock/dimmer -l -- xsecurelock &
 # launch terminal
-termite &
+alacritty &
+# launch pulseaudio systray
+pasystray &
 # launch x compositor
 picom --backend glx --mark-ovredir-focused &
 # set background to blackx

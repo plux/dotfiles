@@ -61,7 +61,7 @@ myKeys =
   ]
 
 myKeysP =
-  [ ("M-S-z", spawn "xsecurelock")
+  [ ("M-S-z", spawn "xset s activate")
   , ("M-C-h", sendMessage $ pullGroup L)
   , ("M-C-l", sendMessage $ pullGroup R)
   , ("M-C-k", sendMessage $ pullGroup U)

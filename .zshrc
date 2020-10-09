@@ -100,7 +100,7 @@ zstyle -e ':completion::*:*:*:hosts' hosts 'reply=(${=${${(f)"$(cat {/etc/ssh_,~
 
 unsetopt correct
 unsetopt correctall
-export ANSIBLE_CONFIG="/home/hakan/dev/infrastructure_ng/se/ansible.cfg"
+export ANSIBLE_CONFIG="~/kivra/infrastructure_ng/se/ansible.cfg"
 
 _fzf_complete_pass() {
     _fzf_complete '+m' "$@" < <(
