@@ -1,0 +1,28 @@
+[rerere]
+	enabled = true
+[alias]
+	co = checkout
+	ci = commit
+	st = status
+	br = branch
+[push]
+	default = current
+[core]
+	editor = emacs
+	quotepath = false
+[github]
+	user = plux
+	oauth-token = 778b53933194e2d9a29210c45636db11e4702cd8
+[magit]
+	hideCampaign = true
+[commit]
+	gpgsign = true
+
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+
+[includeIf "gitdir:~/kivra/"]
+	path = ~/.gitconfig_kivra
+
+[includeIf "gitdir:~/git/"]
+	path = ~/.gitconfig_plux

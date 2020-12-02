@@ -42,7 +42,7 @@ myWorkspaces = ["1","2","3","4","5","6","7","8","9"]
 --  spawn "sleep 1polybar main"
 
 main = xmonad $ gnomeConfig
-  { terminal             = "alacritty"
+  { terminal             = "alacritty --working-directory ~"
   , modMask              = mod4Mask
   , focusFollowsMouse    = True
   , normalBorderColor    = myNormalBorderColor
@@ -73,6 +73,9 @@ myKeysP =
   , ("M-<Left>",      prevWS)
   , ("M-S-<Right>",   shiftToNext >> nextWS)
   , ("M-S-<Left>",    shiftToPrev >> prevWS)
+  , ("M-a",           spawn "dunstctl close")
+  , ("M-S-a",         spawn "dunstctl history-pop")
+  , ("M-=",           spawn "=")
   , ("M-z",           toggleWS)
   , ("M-g",           moveTo Next HiddenNonEmptyWS)
   , ("M-n",           moveTo Next EmptyWS)

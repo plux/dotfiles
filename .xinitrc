@@ -40,11 +40,11 @@ fi
 emacs &
 # turn off beep
 xset b off
-# blank screen after 10 minutes
+# dim screen after 3 minutes, lock after 10 minutes
 xset s on
-xset s 600
+xset s 180 420
 # use xsecurelock to lock screen
-xss-lock -n /usr/lib/xsecurelock/dimmer -l -- xsecurelock &
+xss-lock -n /usr/lib/xsecurelock/dimmer -l -- env XSECURELOCK_PASSWORD_PROMPT=asterisks xsecurelock &
 # launch terminal
 alacritty &
 # launch pulseaudio systray
@@ -53,7 +53,6 @@ pasystray &
 picom --backend glx --mark-ovredir-focused &
 # set background to blackx
 hsetroot -solid black &
-#eval $(ssh-agent) &
 # launch network manager
 nm-applet &
 # launch polybar with delay so workspaces show up

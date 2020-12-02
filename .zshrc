@@ -40,6 +40,7 @@ REPORTTIME=10
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
+
 plugins=(git pass history-substring-search fzf-tab)
 
 source $ZSH/oh-my-zsh.sh
@@ -102,6 +103,10 @@ unsetopt correct
 unsetopt correctall
 export ANSIBLE_CONFIG="~/kivra/infrastructure_ng/se/ansible.cfg"
 
+
+#source /usr/share/fzf/completion.zsh
+source /usr/share/fzf/key-bindings.zsh
+
 _fzf_complete_pass() {
     _fzf_complete '+m' "$@" < <(
         local pwdir=${PASSWORD_STORE_DIR-~/.password-store/}
@@ -111,6 +116,7 @@ _fzf_complete_pass() {
             sed -e 's/\(.*\)\.gpg/\1/'
     )
 }
+
 _fzf_complete_git() {
     ARGS="$@"
     local branches
@@ -128,10 +134,35 @@ _fzf_complete_git_post() {
     awk '{print $1}'
 }
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+_fzf_compgen_path() {
+  fd --hidden --follow --exclude ".git" . "$1"
+}
 
-export FZF_COMPLETION_TRIGGER=''
-bindkey '^T' fzf-completion
+# Use fd to generate the list for directory completion
+_fzf_compgen_dir() {
+  fd --type d --hidden --follow --exclude ".git" . "$1"
+}
+
+# trying it
+_fzf_comprun() {
+  local command=$1
+  shift
+
+  case "$command" in
+    cd)           fzf "$@" --preview 'tree -C {} | head -200' ;;
+    export|unset) fzf "$@" --preview "eval 'echo \$'{}" ;;
+    ssh)          fzf "$@" --preview 'dig {}' ;;
+    *)            fzf "$@" ;;
+  esac
+}
+
+
+#export FZF_COMPLETION_OPTS='-x'
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude ".git"'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+#export FZF_COMPLETION_TRIGGER=''
+#bindkey '^T' fzf-completion
 #bindkey '^I' $fzf_default_completion
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
