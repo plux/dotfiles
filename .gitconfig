@@ -18,11 +18,19 @@
 [commit]
 	gpgsign = true
 
+[alias]
+  wip = for-each-ref --sort='-authordate:iso8601' --format=' %(color:green)%(authordate:relative)%09%(color:white)%(refname:short)' refs/heads
+
 [url "git@github.com:"]
 	insteadOf = https://github.com/
+
+[includeIf "gitdir:~/.password-store/"]
+	path = ~/.gitconfig_kivra
 
 [includeIf "gitdir:~/kivra/"]
 	path = ~/.gitconfig_kivra
 
 [includeIf "gitdir:~/git/"]
 	path = ~/.gitconfig_plux
+[pull]
+	rebase = false
