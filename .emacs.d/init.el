@@ -114,6 +114,7 @@
   (interactive ";")
   (scroll-down (or arg 1)))
 
+
 (global-set-key [S-down] 'scroll-one-line-up)
 (global-set-key [S-up]  'scroll-one-line-down)
 (global-set-key "\C-ca" 'align-regexp)
@@ -146,7 +147,7 @@
 (require 'helm)
 (require 'helm-config)
 (helm-mode 1)
-(helm-fuzzier-mode)
+;(helm-fuzzier-mode)
 (global-set-key (kbd "M-x") 'helm-M-x)
 (global-set-key "\C-x\C-f" 'helm-find-files)
 (global-set-key "\C-xb" 'helm-mini)
@@ -319,6 +320,7 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
 ;; For rust
 (setq exec-path (cons "/home/hakan/.cargo/bin" exec-path))
 (add-hook 'flycheck-mode-hook #'flycheck-rust-setup)
+(use-package rustic)
 
 ;; For scala
 (setq exec-path (cons "/home/hakan/install/sbt/bin" exec-path))
@@ -418,8 +420,8 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
  '(helm-popup-tip-mode t)
  '(nyan-wavy-trail nil)
  '(package-selected-packages
-   '(swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi hydra flycheck helm-lsp erlang company exec-path-from-shell lsp-ui slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package company-lsp lsp-mode ensime jedi csv helm-projectile helm-ls-git helm restclient-helm helm-fuzzy-find helm-fuzzier ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-tramp helm-lobsters helm-pass password-store apib-mode ht dash-functional nginx-mode org-journal yaml-mode smyx-theme smex pg nyan-mode multiple-cursors mic-paren markdown-preview-mode magit haskell-mode go-mode github-issues forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode))
- '(safe-local-variable-values '((allout-layout . t)))
+   '(counsel swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi hydra flycheck helm-lsp erlang company exec-path-from-shell lsp-ui slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package company-lsp lsp-mode ensime jedi csv helm-projectile helm-ls-git restclient-helm helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-tramp helm-lobsters helm-pass password-store apib-mode ht dash-functional nginx-mode org-journal yaml-mode smyx-theme smex pg nyan-mode multiple-cursors mic-paren markdown-preview-mode magit haskell-mode go-mode github-issues forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode))
+ '(safe-local-variable-values '((vim . sw=2) (allout-layout . t)))
  '(vc-follow-symlinks t))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
