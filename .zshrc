@@ -60,7 +60,7 @@ export EDITOR=emacsclient
 setopt HIST_FIND_NO_DUPS
 
 # Setup erlang
-. /home/hakan/install/erl-22.3/activate
+. /home/hakan/install/erl-23.2/activate
 
 # Setup elixir
 #test -s "$HOME/.kiex/scripts/kiex" && source "$HOME/.kiex/scripts/kiex"
@@ -166,3 +166,12 @@ export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 #bindkey '^I' $fzf_default_completion
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
+
+#asdf
+. /opt/asdf-vm/asdf.sh
+
+# append completions to fpath
+fpath=(${ASDF_DIR}/completions $fpath)
+# initialise completions with ZSH's compinit
+autoload -Uz compinit
+compinit
