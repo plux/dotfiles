@@ -1,34 +1,5 @@
-;; Packages
-(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                         ("melpa" . "http://melpa.org/packages/")))
-(require 'benchmark-init)
-
-;(use-package yasnippet
-;  :hook (prog-mode . yas-minor-mode))
-
-;(use-package yasnippet
-;  :after (yasnippet))
-
-;; To disable collection of benchmark data after init is done.
-(add-hook 'after-init-hook 'benchmark-init/deactivate)
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
-(package-initialize)
-;(use-package magit)
-;(use-package magithub
-;  :after magit
-;;  :config
-;;  (magithub-feature-autoinject t)
-;;  (setq magithub-clone-default-directory "~/dev"))
-;
 ;; Stupid splash screen
 (setq inhibit-startup-message t)
-
-;; Start emacs server
-(load "server")
-(unless (server-running-p) (server-start))
 
 ;; Color theme
 (load-theme 'wombat)
@@ -41,28 +12,92 @@
 (tool-bar-mode 0)
 (scroll-bar-mode 0)
 
-;; Use y/n instead of yes/no for questions
-(defalias 'yes-or-no-p 'y-or-n-p)
+(eval-when-compile
+  (require 'use-package))
 
-;; Turn on global font lock mode
-(global-font-lock-mode 1)
+(require 'diminish)
+(require 'bind-key)
 
-;; Turn on hilighting of brackets
-(show-paren-mode t)
+;; Packages
+(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "http://melpa.org/packages/")))
 
-;; Which key mode
-(which-key-mode t)
+(use-package benchmark-init
+  :ensure t
+  :config
+  ;; To disable collection of benchmark data after init is done.
+  (add-hook 'after-init-hook 'benchmark-init/deactivate))
 
+;; Start emacs server
+(load "server")
+(unless (server-running-p) (server-start))
 
-;(require 'auto-highlight-symbol)
-;(global-auto-highlight-symbol-mode t)
+;; Global emacs settings
+(use-package emacs
+  :config
+  ;; Use y/n instead of yes/no for questions
+  (defalias 'yes-or-no-p 'y-or-n-p)
+  ;; Turn on global font lock mode
+  (global-font-lock-mode 1)
+  ;; Turn on hilighting of brackets
+  (show-paren-mode t)
+  ;; Parens
+  (electric-pair-mode t)
+  :bind
+  ( ("M-g"    . goto-line)
+    ([S-down] . scroll-one-line-up)
+    ([S-up]   . scroll-one-line-down)
+    ("C-c a"  . align-regexp)
+    ("C-c g"  . magit-status)
+    ([f5]     . revert-buffer)
+    ))
+
+;; Use hippie auto completion
+(use-package hippie-expand
+  :init
+  (setq hippie-expand-try-functions-list '(try-expand-dabbrev
+                                           try-expand-dabbrev-all-buffers
+                                           try-expand-dabbrev-from-kill
+                                           try-complete-file-name-partially
+                                           try-complete-file-name
+                                           try-expand-list
+                                           try-expand-line))
+  :bind
+  ("C-'" . hippie-expand)
+  )
+
+;; Use meta + arrowkeys to switch windows
+(use-package windmove
+  :config
+  (windmove-default-keybindings 'meta)
+  )
+
+;; Flycheck
+(use-package flycheck
+  :config
+  ;; Always show diagnostics at the bottom, using 1/5 of the available space
+  (add-to-list 'display-buffer-alist
+             `(,(rx bos "*Flycheck errors*" eos)
+              (display-buffer-reuse-window
+               display-buffer-in-side-window)
+              (side            . bottom)
+              (reusable-frames . visible)
+              (window-height   . 0.20)))
+  :bind
+  ( ("C-c C-p" . flycheck-previous-error)
+    ("C-c C-n" . flycheck-next-error)
+    ("C-c C-e" . flycheck-first-error)
+   )
+  )
+
 
 ;; Undo/Redo for window management (undo = C-c left, redo = C-c right)
-(winner-mode 1)
-
-(global-set-key "\C-cu" 'winner-undo)
-(global-set-key "\C-cr" 'winner-redo)
-;(setq lsp-keymap-prefix "C-l")
+(use-package winner
+  :config
+  (winner-mode 1)
+  :bind ( ("C-c u" . winner-undo)
+          ("C-c r" . winnder-redo))
+  )
 
 ;; Scrolling keybindings
 (defun scroll-one-line-up (&optional arg)
@@ -74,210 +109,182 @@
   (interactive)
   (scroll-down (or arg 1)))
 
-;; Ido
-;(ido-mode 1)
-
-;; Parens
-(electric-pair-mode t)
-
-;; Smex config
-;(global-set-key (kbd "M-x") 'smex)
-
-;; Revert buffer
-(global-set-key [f5] 'revert-buffer)
-
-;; Goto line
-;;(global-set-key "\C-l" 'goto-line)
-;;(global-unset-key "\C-l")
-(global-set-key "\M-g" 'goto-line)
-
-
-;(defhydra hydra-my-compilation (global-map "M-g" :color red :columns 2)
-;    "Compilation"
-;    (";" previous-error "Previous error")
-;    ("n" next-error "Next error")
-;    ("l" recenter-top-bottom "recenter")
-;    ("L" reposition-window "reposition")
-;    ("0" first-error "First error")
-;    ("q" nil "quit"))
 ;; Ace jump
-(define-key global-map (kbd "C-j") 'ace-jump-word-mode)
-(define-key global-map (kbd "M-j") 'ace-jump-line-mode)
+(use-package ace-jump-mode
+  :disabled
+  :bind
+  (("C-j" . 'ace-jump-word-mode)
+   ("M-j" . 'ace-jump-line-mode))
+  )
 
-;; Scrolling keybindings
-(defun scroll-one-line-up (&optional arg)
-  "Scroll the selected window up (forward in the text) one line (or N lines)."
-  (interactive ";")
-  (scroll-up (or arg 1)))
-(defun scroll-one-line-down (&optional arg)
-  "Scroll the selected window down (backward in the text) one line (or N)."
-  (interactive ";")
-  (scroll-down (or arg 1)))
-
-
-(global-set-key [S-down] 'scroll-one-line-up)
-(global-set-key [S-up]  'scroll-one-line-down)
-(global-set-key "\C-ca" 'align-regexp)
-(global-set-key "\C-cg" 'magit-status)
-(global-set-key "\C-x\M-g" 'magit-dispatch-popup)
-
-;; key binding for auto complete
-(global-set-key (kbd "C-'") 'hippie-expand)
-
-;; auto-complete settings
-(setq hippie-expand-try-functions-list '(try-expand-dabbrev
-                                         try-expand-dabbrev-all-buffers
-                                         try-expand-dabbrev-from-kill
-                                         try-complete-file-name-partially
-                                         try-complete-file-name
-                                         try-expand-list
-                                         try-expand-line))
-
-;; arrange for effective window-switching
-(global-set-key [M-up]    'windmove-up)
-(global-set-key [M-down]  'windmove-down)
-(global-set-key [M-left]  'windmove-left)
-(global-set-key [M-right] 'windmove-right)
-
-(require 'whitespace)
-(setq whitespace-style '(face empty tabs lines-tail trailing))
-(global-whitespace-mode t)
+;; Use whitespace mode to show whitespace
+(use-package whitespace
+  :init
+  (setq whitespace-style '(face empty tabs lines-tail trailing))
+  :config
+  (global-whitespace-mode t)
+  (diminish 'global-whitespace-mode)
+  )
 
 ;; Helm
-(require 'helm)
-(require 'helm-config)
-(helm-mode 1)
-;(helm-fuzzier-mode)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key "\C-x\C-f" 'helm-find-files)
-(global-set-key "\C-xb" 'helm-mini)
-(global-set-key "\C-c\C-f" 'helm-do-ag-project-root)
-(global-set-key "\C-c\C-r" 'helm-rg)
-(global-set-key "\C-c\C-g" 'helm-ag)
-(global-set-key "\C-c\C-y" 'helm-show-kill-ring)
+(use-package helm
+  :ensure t
+  :init
+  (setq helm-buffer-details-flag nil)
+  (setq helm-allow-mouse t)
+  :config
+  (helm-popup-tip-mode t)
+  :bind ( ("M-x"     . helm-M-x)
+          ("C-x C-f" . helm-find-files)
+          ("C-x b"   . helm-mini)
+          ("C-c C-f" . helm-do-ag-project-root)
+          ("C-c C-r" . helm-rg)
+          ("C-c C-g" . helm-ag)
+          ("C-c C-y" . helm-show-kill-ring)
+          )
+  )
 
-;; Projectile
-(projectile-global-mode)
-(setq projectile-completion-system 'helm)
-(helm-projectile-on)
-(projectile-mode +1)
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+;; Use projectile for project managment
+(use-package projectile
+  :ensure t
+  :init
+  (setq projectile-completion-system 'helm)
+  (setq projectile-enable-caching t)
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :config
+  (projectile-mode +1)
+  (helm-projectile-on)
+  :diminish " p"
+  )
 
+(use-package eldoc
+  :diminish "")
 
-;; Popwin
-; dont really remember why i have this, commenting it out
-;(require 'popwin)
-;(popwin-mode 1)
+;; EditorConfig
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1)
+  :diminish "")
 
-;; Iedit
-; no idea what this is , so cmmenting it out
-;(require 'iedit)
+(use-package exec-path-from-shell
+  :ensure t
+  :config
+  (exec-path-from-shell-initialize)
+  )
 
-;; For EDTS
-;;(add-to-list 'load-path "/home/hakan/dev/edts")
-(setq exec-path (cons "/home/hakan/install/erl-22.3/bin" exec-path))
-(setq exec-path (cons "/home/hakan/.bin" exec-path))
+;; Install the official Erlang mode
+(use-package erlang
+  :defer t
+  :mode (("\\.erl?$" . erlang-mode)
+         ("rebar\\.config$" . erlang-mode)
+         ("relx\\.config$" . erlang-mode)
+         ("sys\\.config\\.src$" . erlang-mode)
+         ("sys\\.config$" . erlang-mode)
+         ("\\.config\\.src?$" . erlang-mode)
+         ("\\.config\\.script?$" . erlang-mode)
+         ("\\.hrl?$" . erlang-mode)
+         ("\\.app?$" . erlang-mode)
+         ("\\.app.src?$" . erlang-mode)
+         ("\\Emakefile" . erlang-mode))
+  )
 
-;; Ensure your Emacs environment looks like your user's shell one
+;; Include the Language Server Protocol Clients
+(use-package lsp-mode
+  :ensure t
+  :init
+  ;; erlang ls
+  (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
+  (setq lsp-keymap-prefix "C-c l")
+  (setq lsp-headerline-breadcrumb-enable nil)
+  (setq lsp-log-io t)
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (erlang-mode . lsp-deferred)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands (lsp lsp-deferred)
+  :config
+  (define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
+  (define-key lsp-mode-map (kbd "C-o") #'helm-lsp-workspace-symbol)
+  )
 
-; Define a utility function which either installs a package (if it is
-;; missing) or requires it (if it already installed).
-(defun package-require (pkg &optional require-name)
-  "Install a package only if it's not already installed."
-  (when (not (package-installed-p pkg))
-    (package-install pkg))
-  (if require-name
-      (require require-name)
-    (require pkg)))
+(use-package lsp-ui
+  :ensure t
+  :init
+  (setq lsp-ui-sideline-enable nil)
+  :commands lsp-ui-mode
+  :hook ((lsp-mode . lsp-ui-mode))
+  )
 
-(package-require 'exec-path-from-shell)
-(exec-path-from-shell-initialize)
+(use-package helm-lsp
+  :ensure t
+  :hook (helm-mode . helm-lsp)
+  :commands helm-lsp-workspace-symbol
+  )
 
-;(setq exec-path (cons "/home/hakan/install/erl-22.3/bin" exec-path))
-;(setq exec-path (cons "/home/hakan/bin" exec-path))
-;; erlang ls
-; (setq exec-path (cons "/home/hakan/dev/erlang_ls/_build/default/bin" exec-path))
+;; Which key
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode t)
+  :diminish ""
+  )
 
-;;
-;; Install the yasnippet dependency
+;; LSP performance tweaks
 
-;; Install the official lsp-mode package
-;;(package-require 'lsp-mode)
-;; It is usually a good idea to install lsp-ui as well
-;;(package-require 'lsp-ui)
-;; The lsp-ui sideline can become a serious distraction, so you
-;; may want to disable it
-;;(setq lsp-ui-sideline-enable nil)
-;; Ensure docs are visible
- ;(setq lsp-ui-doc-enable t)
-;;(setq lsp-ui-doc-enable nil)
-;;(setq lsp-enable-xref t)
-;;(setq lsp-prefer-flymake nil)
-;;(setq lsp-log-io t)
+;; Adjust gc-cons-threshold. The default setting is too low for
+;; lsp-mode's needs due to the fact that client/server communication
+;; generates a lot of memory/garbage. You have two options:
+(setq gc-cons-threshold 100000000)
 
-;;(define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
+;; Increase the amount of data which Emacs reads from the
+;; process. Again the emacs default is too low 4k considering that the
+;; some of the language server responses are in 800k - 3M range.
 
-;; Enable LSP automatically for Erlang files
-;;(add-hook 'erlang-mode-hook #'lsp)
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
 
-;; Override the key bindings from erlang-mode to use LSP for completion
-;;(eval-after-load 'erlang
-;;  '(define-key erlang-mode-map (kbd "C-M-i") #'company-lsp))
+;; Yasnippet
+(use-package yasnippet
+  :ensure t
+  :defer t
+  :hook (;(prog-mode . yas-minor-mode)
+         (lsp-mode . yas-minor-mode))
+  :config
+  (diminish 'yas-minor-mode " y")
+  )
 
-;; make local instead..
-(global-set-key "\C-c\C-p" 'flycheck-previous-error)
-(global-set-key "\C-c\C-n" 'flycheck-next-error)
-(global-set-key [C-tab] 'company-complete)
-(global-set-key [C-return] 'company-complete)
+;; Company
+(use-package company
+  :ensure t
+  :config
+  (global-company-mode t)
+  :diminish ""
+  :bind
+  (([C-tab] . company-complete)
+   ([C-return] . company-complete)
+  ))
 
-;; Hydra
-(require 'hydra)
+(use-package company-box
+  :ensure t
+  :hook (company-mode . company-box-mode)
+  :diminish ""
+  )
 
-(defhydra hydra-projectile-other-window (:color teal)
-  "projectile-other-window"
-  ("f"  projectile-find-file-other-window        "file")
-  ("g"  projectile-find-file-dwim-other-window   "file dwim")
-  ("d"  projectile-find-dir-other-window         "dir")
-  ("b"  projectile-switch-to-buffer-other-window "buffer")
-  ("q"  nil                                      "cancel" :color blue))
+;; Nyan mode
+(use-package nyan-mode
+  :disabled
+  :if window-system
+  :ensure t
+  :config
+  (nyan-mode)
+  (nyan-start-animation)
+  )
 
-(defhydra hydra-projectile (:color teal
-                            :hint nil)
-  "
-     PROJECTILE: %(projectile-project-root)
-
-     Find File            Search/Tags          Buffers                Cache
-------------------------------------------------------------------------------------------
-_s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache clear
- _ff_: file dwim       _g_: update gtags      _b_: switch to buffer  _x_: remove known project
- _fd_: file curr dir   _o_: multi-occur     _s-k_: Kill all buffers  _X_: cleanup non-existing
-  _r_: recent file                                               ^^^^_z_: cache current
-  _d_: dir
-
-"
-  ("a"   projectile-ag)
-  ("b"   projectile-switch-to-buffer)
-  ("c"   projectile-invalidate-cache)
-  ("d"   projectile-find-dir)
-  ("s-f" projectile-find-file)
-  ("ff"  projectile-find-file-dwim)
-  ("fd"  projectile-find-file-in-directory)
-  ("g"   ggtags-update-tags)
-  ("s-g" ggtags-update-tags)
-  ("i"   projectile-ibuffer)
-  ("K"   projectile-kill-buffers)
-  ("s-k" projectile-kill-buffers)
-  ("m"   projectile-multi-occur)
-  ("o"   projectile-multi-occur)
-  ("s-p" projectile-switch-project "switch project")
-  ("p"   projectile-switch-project)
-  ("s"   projectile-switch-project)
-  ("r"   projectile-recentf)
-  ("x"   projectile-remove-known-project)
-  ("X"   projectile-cleanup-known-projects)
-  ("z"   projectile-cache-current-file)
-  ("`"   hydra-projectile-other-window/body "other window")
-  ("q"   nil "cancel" :color blue))
+(use-package edit-server
+  :if window-system
+  :init
+  (add-hook 'after-init-hook 'edit-server-start t))
 
 ;; Rebar3 stuff
 (defun rebar3-ct-suite ()
@@ -299,66 +306,8 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
     (compile (format "rebar3 eunit -v --module %s"
                      (erlang-get-module)))))
 
-
-(defun align-to-equals (begin end)
-  "Align region to equal signs"
-  (interactive "r")
-  (align-regexp begin end "\\(\\s-*\\)=" 1 1))
-
-(defun my-erlang-align-equals-in-clause ()
-  (interactive)
-  (require 'erlang)
-  (save-excursion
-    (erlang-indent-clause)
-    (erlang-mark-clause)
-    (align-to-equals (region-beginning) (region
--end))))
-
-
-(add-to-list 'load-path "/home/hakan/dev/edts")
-
-;; For rust
-(setq exec-path (cons "/home/hakan/.cargo/bin" exec-path))
-(add-hook 'flycheck-mode-hook #'flycheck-rust-setup)
-(use-package rustic)
-
-;; For scala
-(setq exec-path (cons "/home/hakan/install/sbt/bin" exec-path))
-
-(setq deft-auto-save-interval 5.0)
-
-(defun dv/erlang-create-export-signature ()
-  (interactive)
-  (save-excursion
-    (beginning-of-defun)
-    (let ((fun-name (symbol-at-point)))
-      (let ((arity (erlang-get-function-arity)))
-        (let ((export (format "-export([%s/%d])." fun-name arity)))
-          (kill-new export)
-          (message (format "Copied \"%s\"" export)))))))
-
-
-
 ;; Don't use tabs for indentation
 (setq-default indent-tabs-mode nil)
-
-;; Complete
-(require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/.emacs.d/elisp/ac-dict")
-(ac-config-default)
-(global-auto-complete-mode t)
-
-;; IELM
-(defun ielm-auto-complete ()
-  "Enables `auto-complete' support in \\[ielm]."
-  (setq ac-sources '(ac-source-functions
-                     ac-source-variables
-                     ac-source-features
-                     ac-source-symbols
-                     ac-source-words-in-same-mode-buffers))
-  (add-to-list 'ac-modes 'inferior-emacs-lisp-mode)
-  (auto-complete-mode 1))
-(add-hook 'ielm-mode-hook 'ielm-auto-complete)
 
 ;; Cool helper fun
 (defun func-region (start end func)
@@ -378,26 +327,6 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
   (interactive "r")
   (func-region start end #'url-unhex-string))
 
-;(use-package elpy
-;  :ensure t
-;  :init
-;  (elpy-enable))
-;(setq elpy-rpc-python-command "python3")
-;(setq elpy-rpc-backend "jedi")
-
-;; Enable autopep8
-;(require 'py-autopep8)
-;(add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
-
-
-(add-hook 'after-init-hook 'my-after-init-hook)
-(defun my-after-init-hook ()
-  (require 'edts-start)
-  (edit-server-start)
-  (nyan-mode t)
-  (nyan-start-animation)
-  )
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -405,22 +334,23 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
  ;; If there is more than one, they won't work right.
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
+ '(company-idle-delay 0.5)
+; '(company-quickhelp-color-background "#656565")
+; '(company-quickhelp-color-foreground "#ffffff")
+; '(company-quickhelp-delay 0.0)
+; '(company-quickhelp-mode t)
  '(custom-safe-themes
-   '("1c596673c1d111e95a404bd12f8dd446cbcd47eee885271e21ffc98c3ac386cb" "3e038e9133010baa92e17a2c57f87336e91e6e76139d8c38d7d55d3c59a15967" "682a1161ee456e2d715ba30be61697fdbce8c08e23c2c6a1943f155e3e52f701" "147a0b0fce798587628774ae804a18a73f121e7e5c5fdf3a874ba584fdbe131d" "4e96c6ca1ab443d9804bcb55104848b25bdfda5ae665adeb218db1af07e7979a" "e503f6b2f45ecc5c5e295d1b3d84bb484206c4badbf716847a2445facf9f7495" "fe2a620695413fe5dcd74e03f0383e577effd7bb59527aa4d86444108d861504" "2f57ee6507f30d3228cdddadd0150e7b2fd85dd7c818c2d6485888c7249c37e8" default))
+   '("1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "b0334e8e314ea69f745eabbb5c1817a173f5e9715493d63b592a8dc9c19a4de6" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "eb122e1df607ee9364c2dfb118ae4715a49f1a9e070b9d2eb033f1cefd50a908" "78c4238956c3000f977300c8a079a3a8a8d4d9fee2e68bad91123b58a4aa8588" "d14f3df28603e9517eb8fb7518b662d653b25b26e83bd8e129acea042b774298" "83e0376b5df8d6a3fbdfffb9fb0e8cf41a11799d9471293a810deb7586c131e6" "6b5c518d1c250a8ce17463b7e435e9e20faa84f3f7defba8b579d4f5925f60c1" "7661b762556018a44a29477b84757994d8386d6edee909409fabe0631952dad9" "1c596673c1d111e95a404bd12f8dd446cbcd47eee885271e21ffc98c3ac386cb" "3e038e9133010baa92e17a2c57f87336e91e6e76139d8c38d7d55d3c59a15967" "682a1161ee456e2d715ba30be61697fdbce8c08e23c2c6a1943f155e3e52f701" "147a0b0fce798587628774ae804a18a73f121e7e5c5fdf3a874ba584fdbe131d" "4e96c6ca1ab443d9804bcb55104848b25bdfda5ae665adeb218db1af07e7979a" "e503f6b2f45ecc5c5e295d1b3d84bb484206c4badbf716847a2445facf9f7495" "fe2a620695413fe5dcd74e03f0383e577effd7bb59527aa4d86444108d861504" "2f57ee6507f30d3228cdddadd0150e7b2fd85dd7c818c2d6485888c7249c37e8" default))
  '(display-time-24hr-format t)
  '(display-time-day-and-date t)
  '(display-time-default-load-average nil)
  '(display-time-format nil)
  '(display-time-mode t)
- '(edts-inhibit-package-check t)
  '(fci-rule-color "#151515")
- '(helm-allow-mouse t)
- '(helm-buffer-details-flag nil)
- '(helm-mode t)
- '(helm-popup-tip-mode t)
- '(nyan-wavy-trail nil)
+ '(flymake-fringe-indicator-position 'left-fringe)
+ '(flymake-note-bitmap '(exclamation-mark compilation-info))
  '(package-selected-packages
-   '(counsel swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi hydra flycheck helm-lsp erlang company exec-path-from-shell lsp-ui slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package company-lsp lsp-mode ensime jedi csv helm-projectile helm-ls-git restclient-helm helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-tramp helm-lobsters helm-pass password-store apib-mode ht dash-functional nginx-mode org-journal yaml-mode smyx-theme smex pg nyan-mode multiple-cursors mic-paren markdown-preview-mode magit haskell-mode go-mode github-issues forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode))
+   '(company-fuzzy rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme counsel swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package company-lsp lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode magit haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet company helm-lsp benchmark-init exec-path-from-shell))
  '(safe-local-variable-values '((vim . sw=2) (allout-layout . t)))
  '(vc-follow-symlinks t))
 (custom-set-faces
@@ -428,10 +358,22 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(company-preview ((t (:foreground "#a0a0a0"))))
+ '(company-preview-common ((t (:inherit company-preview))))
+ '(company-scrollbar-bg ((t (:background "#494949"))))
+ '(company-scrollbar-fg ((t (:background "#656565"))))
+ '(company-tooltip ((t (:background "#494949" :foreground "white"))))
+ '(company-tooltip-annotation ((t (:foreground "#cae682"))))
+ '(company-tooltip-common ((t (:underline "#cae682"))))
+ '(company-tooltip-search-selection ((t (:inherit highlight))))
+ '(company-tooltip-selection ((t (:background "#656565" :foreground "white"))))
  '(edts-face-error-line ((t (:underline "#ff0000"))))
  '(edts-face-error-mode-line ((t (:box (:line-width 1 :color "red")))))
  '(edts-face-failed-test-line ((t (:underline "#ff0000"))))
  '(edts-face-warning-mode-line ((t (:box (:line-width 1 :color "gold")))))
+ '(flymake-error ((t (:underline "tomato"))))
+ '(flymake-note ((t (:underline "#58a4ed"))))
+ '(flymake-warning ((t (:underline "gold2"))))
  '(helm-buffer-directory ((t (:background "gray25" :foreground "white"))))
  '(helm-buffer-file ((t nil)))
  '(helm-candidate-number ((t (:foreground "#ffc125"))))
@@ -440,49 +382,7 @@ _s-f_: file            _a_: ag                _i_: Ibuffer           _c_: cache 
  '(helm-header-line-left-margin ((t (:background "yellow" :foreground "black"))))
  '(helm-match ((t (:foreground "#ffc125"))))
  '(helm-selection ((t (:background "gray25" :distant-foreground "black"))))
- '(helm-source-header ((t (:foreground "#cae682" :weight bold)))))
+ '(helm-source-header ((t (:foreground "#cae682" :weight bold))))
+ '(lsp-face-highlight-textual ((t (:weight bold)))))
+
 (put 'downcase-region 'disabled nil)
-
-(defun dv/erlang-create-export-signature (fun arity)
-  (format "-export([%s/%d])." fun arity))
-
-(defun dv/erlang-current-function-name-and-arity ()
-  (save-excursion
-    (if (not (eobp)) (forward-char 1))
-    (and (erlang-beginning-of-clause)
-         (cons (erlang-get-function-name) (erlang-get-function-arity)))))
-
-(defun dv/append-export-signature (fun arity)
-  (let ((signature (dv/erlang-create-export-signature fun arity))
-        (last-export (dv/erlang-last-export)))
-    (if last-export
-
-        (save-excursion
-          (end-of-buffer)
-
-          (if (re-search-backward last-export nil t)
-              (progn
-                (end-of-line)
-                (newline-and-indent)
-                (insert signature))
-            (message (format "Could not find %s" last-export))))
-      (progn
-        (kill-new signature)
-        (message (format "Could not locate export section, copied %s" signature))))))
-
-(defun dv/add-export-signature ()
-  (interactive)
-  (let ((fun-and-arity (dv/erlang-current-function-name-and-arity)))
-    (cond ((erlang-function-exported-p (car fun-and-arity) (cdr fun-and-arity)) (message "Function already exported."))
-          ((eq nil (car fun-and-arity)) (message "No function under point"))
-          (t (dv/append-export-signature (car fun-and-arity) (cdr fun-and-arity))))))
-
-
-(defun dv/erlang-last-export ()
-  (let ((last-export (last (erlang-get-export))))
-    (when last-export
-      (let ((last-export-string
-             (regexp-quote (format "-export([%s/%d])."
-                                   (caar last-export)
-                                   (cdar last-export)))))
-        last-export-string))))
