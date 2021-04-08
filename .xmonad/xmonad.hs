@@ -1,6 +1,6 @@
 import XMonad
 import XMonad.Util.EZConfig
-import XMonad.Config.Gnome
+import XMonad.Config.Xfce
 import XMonad.ManageHook
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
@@ -29,6 +29,7 @@ myManageHook =
     , className =? "desktop_window"  --> doFloat
     , appName =? "Enpass-Desktop"  --> doFloat
     , appName =? "Enpass"  --> doFloat
+    , appName =? "wrapper-2.0" --> doFloat
     , isFullscreen --> doFullFloat
     , manageDocks
     ]
@@ -38,27 +39,19 @@ curLayout = gets windowset >>= return . description . W.layout . W.workspace . W
 
 myWorkspaces = ["1","2","3","4","5","6","7","8","9"]
 
---startup = do
---  spawn "sleep 1polybar main"
-
-main = xmonad $ gnomeConfig
-  { terminal             = "alacritty --working-directory ~"
+main = xmonad $ xfceConfig
+  { terminal             = "xfce4-terminal"
   , modMask              = mod4Mask
   , focusFollowsMouse    = True
   , normalBorderColor    = myNormalBorderColor
   , focusedBorderColor   = myFocusedBorderColor
   , borderWidth          = 2
   , manageHook           = manageHook defaultConfig <+> composeAll myManageHook
---  , startupHook          = startup
   }
   `additionalKeysP` myKeysP
   `additionalKeys` myKeys
 
-myKeys =
-  [ ((0, xF86XK_AudioRaiseVolume), spawn "pactl set-sink-volume 0 +5%")
-  , ((0, xF86XK_AudioLowerVolume), spawn "pactl set-sink-volume 0 -5%")
-  , ((0, xF86XK_AudioMute),        spawn "pactl set-sink-mute 0 toggle")
-  ]
+myKeys = []
 
 myKeysP =
   [ ("M-S-z", spawn "xset s activate")
@@ -73,10 +66,8 @@ myKeysP =
   , ("M-<Left>",      prevWS)
   , ("M-S-<Right>",   shiftToNext >> nextWS)
   , ("M-S-<Left>",    shiftToPrev >> prevWS)
-  , ("M-a",           spawn "dunstctl close")
-  , ("M-S-a",         spawn "dunstctl history-pop")
-  , ("M-=",           spawn "=")
   , ("M-z",           toggleWS)
+  , ("M-y",           spawn "ytfzf -D")
   , ("M-g",           moveTo Next HiddenNonEmptyWS)
   , ("M-n",           moveTo Next EmptyWS)
   , ("M-S-n",         tagToEmptyWorkspace)
@@ -86,9 +77,8 @@ myKeysP =
   , ("M-S-<Down>",    windows W.swapDown)
   , ("M-S-<Up>",      windows W.swapUp)
   , ("M-d",           spawn "dmenu_run -l 30 -p run")
-  , ("M-p",           spawn "~/bin/passmenu")
-  , ("M-x",           spawn "~/bin/dswitcher")
-  , ("M-f",           spawn "~/bin/switchlang")
+  , ("M-p",           spawn "~/.bin/passmenu")
+  , ("M-x",           spawn "~/.bin/dswitcher")
   ]
   ++
   [ (mask ++ "M-" ++ [key], screenWorkspace scr >>= flip whenJust (windows . action))
