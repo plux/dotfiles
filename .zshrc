@@ -1,3 +1,5 @@
+export GIT_MERGE_AUTOEDIT=no
+
 # Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
 
@@ -18,7 +20,7 @@ ZSH_THEME="plux"
 #
 
 ## Aliases
-alias e="emacs -nw -Q"
+alias e="emacs -nw"
 
 # Set to this to use case-sensitive completion
 # CASE_SENSITIVE="true"
@@ -48,13 +50,20 @@ source $ZSH/oh-my-zsh.sh
 # Customize to your needs...
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
 export PATH=/home/hakan/.bin:$PATH
-export PATH=/home/hakan/dev/developer_bootstrap/scripts:$PATH
+export PATH=/home/hakan/cisco/git-bootstrap/commands/:$PATH
 export PATH=$HOME/.cabal/bin:/opt/cabal/1.22/bin:/opt/ghc/7.10.3/bin:$PATH
 export PATH=$PATH:/home/hakan/.cache/rebar3/bin
 export PATH=$PATH:/home/hakan/.cargo/bin
-export PATH=$PATH:/home/hakan/install/sbt/bin
-export PATH=$PATH:/home/hakan/install/spark-2.3.1-bin-hadoop2.7/bin
+#export PATH=$PATH:/home/hakan/install/sbt/bin
+#export PATH=$PATH:/home/hakan/install/spark-2.3.1-bin-hadoop2.7/bin
 export EDITOR=emacsclient
+
+# History tweaks
+export HISTFILESIZE=1000000000
+export HISTSIZE=1000000000
+
+setopt SHARE_HISTORY
+export HISTTIMEFORMAT="[%F %T] "
 
 # history-substring-search options
 setopt HIST_FIND_NO_DUPS
@@ -168,10 +177,19 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 
 #asdf
-. /opt/asdf-vm/asdf.sh
+#. /opt/asdf-vm/asdf.sh
 
 # append completions to fpath
 fpath=(${ASDF_DIR}/completions $fpath)
 # initialise completions with ZSH's compinit
 autoload -Uz compinit
 compinit
+
+
+# tail-f
+export TAILF_OTP_CACHE=$HOME/tmp/otp-cache
+#. ~/cisco/tailf/env.sh
+
+# workaround for shell prompt issues
+#export LUX_FLAGS='--shell_prompt_regexp=SH-PROMPT':
+export TYPE=debug
