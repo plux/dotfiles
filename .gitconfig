@@ -30,7 +30,14 @@
 [includeIf "gitdir:~/kivra/"]
 	path = ~/.gitconfig_kivra
 
+[includeIf "gitdir:~/cisco/"]
+	path = ~/.gitconfig_cisco
+
 [includeIf "gitdir:~/git/"]
 	path = ~/.gitconfig_plux
 [pull]
-	rebase = false
+	rebase = preserve
+[credential "https://github.com"]
+	helper = !gh auth git-credential
+[init]
+	templatedir = /home/hakan/.git-templates

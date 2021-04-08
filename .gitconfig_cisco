@@ -1,0 +1,9 @@
+[include]
+    path = ~/cisco/git-bootstrap/.gitconfig
+[core]
+    excludesfile = ~/cisco/git-bootstrap/.gitignore_global
+
+[user]
+        name = Hakan Nilsson
+        email = hanilsso@cisco.com
+        signingkey = 55FED182DB1B963C
