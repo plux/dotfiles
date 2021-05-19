@@ -43,7 +43,7 @@ REPORTTIME=10
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 
-plugins=(git pass history-substring-search fzf-tab)
+plugins=(git gitfast pass history-substring-search fzf-tab)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -69,7 +69,7 @@ export HISTTIMEFORMAT="[%F %T] "
 setopt HIST_FIND_NO_DUPS
 
 # Setup erlang
-. /home/hakan/install/erl-23.2/activate
+. /home/hakan/install/erl-24.0/activate
 
 # Setup elixir
 #test -s "$HOME/.kiex/scripts/kiex" && source "$HOME/.kiex/scripts/kiex"
@@ -188,8 +188,10 @@ compinit
 
 # tail-f
 export TAILF_OTP_CACHE=$HOME/tmp/otp-cache
-#. ~/cisco/tailf/env.sh
+#. ~/tailf/trunk/env.sh
 
 # workaround for shell prompt issues
 #export LUX_FLAGS='--shell_prompt_regexp=SH-PROMPT':
-export TYPE=debug
+#export TYPE=debug
+export ERL_COMPILER_OPTIONS=[debug_info]
+alias tfenv='source ~/tailf/$(ls ~/tailf | fzf)/env.sh'
