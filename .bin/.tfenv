@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -f ~/tailf/${1}/env.sh ]; then
+   source ~/tailf/${1}/env.sh
+else
+   source ~/tailf/$(ls ~/tailf | fzf)/env.sh
+fi;
