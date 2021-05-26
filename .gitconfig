@@ -33,6 +33,9 @@
 [includeIf "gitdir:~/cisco/"]
 	path = ~/.gitconfig_cisco
 
+[includeIf "gitdir:~/tailf/"]
+	path = ~/.gitconfig_cisco
+
 [includeIf "gitdir:~/git/"]
 	path = ~/.gitconfig_plux
 [pull]
