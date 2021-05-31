@@ -1,6 +1,6 @@
 #!/bin/sh
-if [ -f ~/tailf/${1}/env.sh ]; then
-   source ~/tailf/${1}/env.sh
+if [ -f ${TAILF_SEARCH_PATH}/${1}/env.sh ]; then
+   source ${TAILF_SEARCH_PATH}/${1}/env.sh
 else
-   source ~/tailf/$(ls ~/tailf | fzf)/env.sh
+   source ${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf)/env.sh
 fi;

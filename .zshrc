@@ -194,4 +194,6 @@ export TAILF_OTP_CACHE=$HOME/tmp/otp-cache
 #export LUX_FLAGS='--shell_prompt_regexp=SH-PROMPT':
 #export TYPE=debug
 export ERL_COMPILER_OPTIONS=[debug_info]
+TAILF_SEARCH_PATH="$HOME/tailf"
 alias tfenv='source ~/.bin/.tfenv'
+alias tfjump='source ~/.bin/.tfjump'

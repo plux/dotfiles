@@ -1,0 +1,30 @@
+#!/bin/sh
+
+beginswith() {
+    case $2 in
+        "$1"*) true;;
+        *) false;;
+    esac
+}
+
+main() {
+    local CURR_VERSION=""
+    local CURR_SUB_PATH=""
+    for version in "${TAILF_SEARCH_PATH}"/*; do
+        beginswith "${version}" "${PWD}";
+        if [ $? = 0 ]; then
+            CURR_VERSION="${version}"
+        fi
+    done
+
+    if [ "${CURR_VERSION}" != "" ]; then
+        CURR_SUB_PATH=${PWD#"${CURR_VERSION}"}
+        if [[ ! -d "${W}${CURR_SUB_PATH}" ]]; then
+            CURR_SUB_PATH=""
+        fi
+    fi
+    tfenv "$1"
+    cd "${W}${CURR_SUB_PATH}" || return
+}
+
+main "$1"
