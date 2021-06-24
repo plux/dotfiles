@@ -167,8 +167,9 @@ _fzf_comprun() {
 
 
 #export FZF_COMPLETION_OPTS='-x'
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude ".git"'
+export FZF_DEFAULT_COMMAND='fd --hidden --follow --exclude ".git"'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude ".git"'
 
 #export FZF_COMPLETION_TRIGGER=''
 #bindkey '^T' fzf-completion
@@ -180,11 +181,13 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 #. /opt/asdf-vm/asdf.sh
 
 # append completions to fpath
-fpath=(${ASDF_DIR}/completions $fpath)
+#fpath=(${ASDF_DIR}/completions $fpath)
 # initialise completions with ZSH's compinit
 autoload -Uz compinit
 compinit
 
+# rg is better than ag :)
+alias ag="rg"
 
 # tail-f
 export TAILF_OTP_CACHE=$HOME/tmp/otp-cache
@@ -197,3 +200,6 @@ export ERL_COMPILER_OPTIONS=[debug_info]
 TAILF_SEARCH_PATH="$HOME/tailf"
 alias tfenv='source ~/.bin/.tfenv'
 alias tfjump='source ~/.bin/.tfjump'
+# set to empty to silence direnv logging
+export DIRENV_LOG_FORMAT=""
+eval "$(direnv hook zsh)"
