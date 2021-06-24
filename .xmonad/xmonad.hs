@@ -30,6 +30,7 @@ myManageHook =
     , appName =? "Enpass-Desktop"  --> doFloat
     , appName =? "Enpass"  --> doFloat
     , appName =? "wrapper-2.0" --> doFloat
+--    , className =? "" --> doFloat
     , isFullscreen --> doFullFloat
     , manageDocks
     ]
