@@ -23,8 +23,14 @@ main() {
             CURR_SUB_PATH=""
         fi
     fi
-    tfenv "$1"
-    cd "${W}${CURR_SUB_PATH}" || return
+    local NEW_PATH=""
+    if [ -e ${TAILF_SEARCH_PATH}/${1}/env.sh ]; then
+        NEW_PATH="${TAILF_SEARCH_PATH}/${1}/${CURR_SUB_PATH}"
+    else
+        NEW_PATH="${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf)/${CURR_SUB_PATH}"
+    fi;
+    echo "jump to ${NEW_PATH}"
+    cd "${NEW_PATH}" || return
 }
 
 main "$1"
