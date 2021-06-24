@@ -54,7 +54,7 @@ main = xmonad $ xfceConfig
 myKeys = []
 
 myKeysP =
-  [ ("M-S-z", spawn "xset s activate")
+  [ ("M-S-z", spawn "xflock4")
   , ("M-C-h", sendMessage $ pullGroup L)
   , ("M-C-l", sendMessage $ pullGroup R)
   , ("M-C-k", sendMessage $ pullGroup U)
