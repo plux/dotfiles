@@ -76,7 +76,7 @@ myKeysP =
   , ("M-<Up>",        windows W.focusUp)
   , ("M-S-<Down>",    windows W.swapDown)
   , ("M-S-<Up>",      windows W.swapUp)
-  , ("M-d",           spawn "dmenu_run -l 30 -p run")
+  , ("M-d",           spawn "dmenu_run -l 30 -sb '#494949' -p run")
   , ("M-p",           spawn "~/.bin/passmenu")
   , ("M-x",           spawn "~/.bin/dswitcher")
   ]
