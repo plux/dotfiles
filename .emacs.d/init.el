@@ -42,7 +42,7 @@
 (defun lux-run-test ()
   "Run current lux test."
   (interactive ())
-  (compile (format "source %senv.sh; make LUX_FILES=%s"
+  (compile (format "source %senv.sh; make --keep-going LUX_FILES=%s"
                    (projectile-project-root)
                    (file-name-nondirectory (buffer-file-name)))))
 ;; Packages
@@ -408,7 +408,7 @@
   :ensure t
   :init
 ;  (setq projectile-completion-system 'helm)
-  (setq projectile-enable-caching t)
+  (setq projectile-enable-caching nil)
   :bind-keymap
   ("C-c p" . projectile-command-map)
   :config

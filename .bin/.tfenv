@@ -2,5 +2,5 @@
 if [ -f ${TAILF_SEARCH_PATH}/${1}/env.sh ]; then
    source ${TAILF_SEARCH_PATH}/${1}/env.sh
 else
-   source ${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf)/env.sh
+   source ${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf --layout=reverse --height=1%)/env.sh
 fi;

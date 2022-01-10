@@ -35,11 +35,14 @@
 
 [includeIf "gitdir:~/tailf/"]
 	path = ~/.gitconfig_cisco
+        
+[includeIf "gitdir:~/tmp/otp-cache/"]
+	path = ~/.gitconfig_cisco
 
 [includeIf "gitdir:~/git/"]
 	path = ~/.gitconfig_plux
 [pull]
-	rebase = preserve
+	rebase = merges
 [credential "https://github.com"]
 	helper = !gh auth git-credential
 [init]

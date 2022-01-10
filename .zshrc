@@ -69,7 +69,7 @@ export HISTTIMEFORMAT="[%F %T] "
 setopt HIST_FIND_NO_DUPS
 
 # Setup erlang
-. /home/hakan/install/erl-24.0/activate
+. /home/hakan/install/erl-24.1/activate
 
 # Setup elixir
 #test -s "$HOME/.kiex/scripts/kiex" && source "$HOME/.kiex/scripts/kiex"

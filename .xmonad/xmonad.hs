@@ -41,7 +41,7 @@ curLayout = gets windowset >>= return . description . W.layout . W.workspace . W
 myWorkspaces = ["1","2","3","4","5","6","7","8","9"]
 
 main = xmonad $ xfceConfig
-  { terminal             = "xfce4-terminal"
+  { terminal             = "alacritty"
   , modMask              = mod4Mask
   , focusFollowsMouse    = True
   , normalBorderColor    = myNormalBorderColor

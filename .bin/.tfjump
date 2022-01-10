@@ -10,6 +10,7 @@ beginswith() {
 main() {
     local CURR_VERSION=""
     local CURR_SUB_PATH=""
+    local FZF_CMD="fzf --layout=reverse --height=1%"
     for version in "${TAILF_SEARCH_PATH}"/*; do
         beginswith "${version}" "${PWD}";
         if [ $? = 0 ]; then
@@ -27,7 +28,7 @@ main() {
     if [ -e ${TAILF_SEARCH_PATH}/${1}/env.sh ]; then
         NEW_PATH="${TAILF_SEARCH_PATH}/${1}/${CURR_SUB_PATH}"
     else
-        NEW_PATH="${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf)/${CURR_SUB_PATH}"
+        NEW_PATH="${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf --layout=reverse --height=1%)/${CURR_SUB_PATH}"
     fi;
     echo "jump to ${NEW_PATH}"
     cd "${NEW_PATH}" || return
