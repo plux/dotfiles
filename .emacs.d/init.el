@@ -1,9 +1,9 @@
 ;;; init.el -- My emacs config
+;; Moved to early-init.el
 ;; Adjust gc-cons-threshold. The default setting is too low.
 ;; The default is 800 kilobytes.  Measured in bytes.
-(setq gc-cons-threshold (* 100 1000 1000))
-
-;; Profile emacs startup
+;(setq gc-cons-threshold (* 100 1000 1000))
+;(setq comp-deferred-compilation t)
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "%s [duration: %s] [gcs: %d]"
@@ -11,29 +11,33 @@
                      (format "%.2f s"
                              (float-time
                               (time-subtract after-init-time before-init-time)))
-                     gcs-done)))
+                     gcs-done)
+            (setq gc-cons-threshold (* 10 1000 1000))))
 
+;(require 'ccls)
+;; Profile emacs startup
 ;; Stupid splash screen
-(setq inhibit-startup-message t)
+;(setq inhibit-startup-message t)
 
 ;; Color theme
-(load-theme 'wombat)
-
+;(load-theme 'wombat)
 ;; Columns are nice
 (column-number-mode 1)
+(global-hl-line-mode)
 
 ;; Turn of menubar, toolbar and scrollbar
-(menu-bar-mode 0)
-(tool-bar-mode 0)
-(scroll-bar-mode 0)
+;(menu-bar-mode 0)
+;(tool-bar-mode 0)
+;(scroll-bar-mode 0)
 
 (eval-when-compile
   (require 'use-package))
 
-(require 'diminish)
-(require 'bind-key)
+;(require 'diminish)
+;(require 'bind-key)
 
-(require 'lux-mode)
+(eval-when-compile
+  (require 'lux-mode))
 (use-package lux-mode
   :bind
   ("C-c C-c" . lux-run-test)
@@ -45,7 +49,6 @@
   (compile (format "source %senv.sh; make --keep-going LUX_FILES=%s"
                    (projectile-project-root)
                    (file-name-nondirectory (buffer-file-name)))))
-
 
 (defun tailf-compile ()
   "Compile in tailf."
@@ -83,17 +86,94 @@
 ;;     (corfu-terminal-mode +1))
 ;;   )
 
+
 ;; Packages
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")))
+
+(use-package all-the-icons-completion
+  :after (marginalia all-the-icons)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+  :init
+  (all-the-icons-completion-mode))
+
+;; (use-package kind-icon
+;;   :ensure t
+;;   :after corfu
+;;   :custom
+;;   (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
+;; (use-package corfu
+;;   ;; Optional customizations
+;;   :custom
+;;   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+;;   (corfu-auto nil)                 ;; Enable auto completion
+;;   (corfu-separator ?\s)          ;; Orderless field separator
+;;   (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+;;   (corfu-quit-no-match t)      ;; Never quit, even if there is no match
+;;   (corfu-preview-current t)    ;; Disable current candidate preview
+;;   ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
+;;   ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+;;   (corfu-echo-documentation nil) ;; Disable documentation in the echo area
+
+;;   ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+;;   ;; Enable Corfu only for certain modes.
+;;   ;; :hook ((prog-mode . corfu-mode)
+;;   ;;        (shell-mode . corfu-mode)
+;;   ;;        (eshell-mode . corfu-mode))
+
+;;   ;; Recommended: Enable Corfu globally.
+;;   ;; This is recommended since Dabbrev can be used globally (M-/).
+;;   ;; See also `corfu-excluded-modes'.
+;;   ;;  :hook ((lsp-mode . corfu-doc-mode))
+;;   :init
+;;   (global-corfu-mode))
+
+;; ;; Use Dabbrev with Corfu!
+;; (use-package dabbrev
+;;   ;; Swap M-/ and C-M-/
+;;   :bind (("M-/" . dabbrev-completion)
+;;          ("C-M-/" . dabbrev-expand))
+;;   ;; Other useful Dabbrev configurations.
+;;   :custom
+;;   (dabbrev-expand)
+;;   (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
+
+;; ;; Add extensions
+;; (use-package cape
+;;   :init
+;;   ;; Add `completion-at-point-functions', used by `completion-at-point'.
+;;   (add-to-list 'completion-at-point-functions #'cape-file)
+;;   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-history)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-tex)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+;;   ;;(add-to-list 'completion-at-point-functions #'cape-line)
+;;   )
+
+;; Needed to enable corfu, otherwise conflict with company-mode
+;; (setq lsp-completion-provider :none)
+;; (defun corfu-lsp-setup ()
+;;   (setq-local completion-styles '(orderless)
+;;               completion-category-defaults nil))
+;; (add-hook 'lsp-mode-hook #'corfu-lsp-setup)
+
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
   :custom
   (doom-modeline-height 25)
   (doom-modeline-bar-width 1)
-  (doom-modeline-icon t)
-  ;; (doom-modeline-major-mode-icon t)
+  (doom-modeline-icon nil)
+  (doom-modeline-major-mode-icon nil)
   (doom-modeline-major-mode-color-icon nil)
   ;; (doom-modeline-buffer-file-name-style 'truncate-upto-project)
   ;; (doom-modeline-buffer-state-icon t)
@@ -152,9 +232,17 @@
     ("C-`"   . popper-toggle-latest)
     ("M-`"   . popper-cycle)
     ("C-M-`" . popper-toggle-type)
-    ("C-o"   . dired-sidebar-toggle-sidebar)
+    ("C-o"   . lsp-rename)
     ))
 
+(defun run-projectile-invalidate-cache (&rest _args)
+  ;; We ignore the args to `magit-checkout'.
+  (projectile-invalidate-cache nil))
+
+(advice-add 'magit-checkout
+            :after #'run-projectile-invalidate-cache)
+(advice-add 'magit-branch-and-checkout ; This is `b c'.
+            :after #'run-projectile-invalidate-cache)
 ;; Use hippie auto completion
 (use-package hippie-expand
   :init
@@ -184,6 +272,8 @@
   (windmove-default-keybindings 'meta)
   )
 
+(exec-path)
+
 (use-package exec-path-from-shell
   :ensure t
   :config
@@ -197,13 +287,17 @@
   (setq exec-path (cons "/home/hakan/tailf/trunk/bin" exec-path))
   (flycheck-define-checker yang
     "A yang syntax checker using yanger."
+
     :command ("yanger" source)
+
     :error-patterns
     ((error line-start (file-name) ":" line ":" column ": " (message) line-end)
      (error line-start (file-name) ":" line ": " (message) line-end))
     :modes yang-mode)
   (flycheck-add-mode 'yang 'yang-mode)
   (setq flycheck-checkers (cons 'yang flycheck-checkers))
+  (setq flycheck-navigation-minimum-level #'warning)
+  (setq flycheck-error-list-minimum-level #'warning)
 
   ;; Add lux flycheck
   (setq exec-path (cons "/home/hakan/tailf/trunk/system/test/bin" exec-path))
@@ -294,25 +388,38 @@
   :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
          ("M-A" . marginalia-cycle))
-
+  :config
+  (setq marginalia-command-categories
+        (append '((projectile-find-file . project-file)
+                  (projectile-find-dir . project-file)
+                  (projectile-switch-project . file))
+                marginalia-command-categories))
   ;; The :init configuration is always executed (Not lazy!)
   :init
-
   ;; Must be in the :init section of use-package such that the mode gets
   ;; enabled right away. Note that this forces loading the package.
   (marginalia-mode))
 
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
 ;; Orderless
 (use-package orderless
   :defer t
   :init
-  (setq completion-styles '(orderless))
+  (setq completion-styles '(orderless basic))
   ;; Persist history over Emacs restarts
-  :config
-  (savehist-mode)
   ;; Optional performance optimization
   ;; by highlighting only the visible candidates.
   )
+
+(setq completion-in-region-function
+      (lambda (&rest args)
+        (apply (if vertico-mode
+                   #'consult-completion-in-region
+                 #'completion--in-region)
+               args)))
 
 ;; Example configuration for Consult
 (use-package consult
@@ -344,6 +451,7 @@
          ;; ("M-g m" . consult-mark)
          ;; ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
+         ("M-g q" . lsp-execute-code-action)
          ;; ("M-g I" . consult-project-imenu)
          ;; M-s bindings (search-map)
          ;; ("M-s f" . consult-find)
@@ -421,41 +529,89 @@
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
   )
 
-;; Selectrum
-(use-package selectrum
+;; ;; Selectrum
+;; (use-package selectrum
+;;   :init
+;;   :config
+;;   (selectrum-mode +1)
+;;   (setq orderless-skip-highlighting (lambda () selectrum-is-active))
+;;   (setq selectrum-highlight-candidates-function #'orderless-highlight-matches)
+;;   )
+
+(use-package vertico
   :init
-  :config
-  (selectrum-mode +1)
-  (setq orderless-skip-highlighting (lambda () selectrum-is-active))
-  (setq selectrum-highlight-candidates-function #'orderless-highlight-matches)
+  (vertico-mode)
+
+  ;; Different scroll margin
+  ;; (setq vertico-scroll-margin 0)
+
+  ;; Show more candidates
+  (setq vertico-count 20)
+
+  ;; Grow and shrink the Vertico minibuffer
+  (setq vertico-resize t)
+
+  ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
+  (setq vertico-cycle t)
   )
 
-
-;; Helm
-(use-package helm
+(use-package embark
   :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
   :init
-  (setq helm-buffer-details-flag nil)
-  (setq helm-allow-mouse t)
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+  (setq embark-prompter 'embark-completing-read-prompter)
+  (setq embark-indicators '(embark-highlight-indicator
+                            embark-isearch-highlight-indicator))
   :config
-  (helm-popup-tip-mode t)
-  :bind (
-;;        ("M-x"     . helm-M-x)
-;;        ("C-x C-f" . helm-find-files)
-;;        ("C-x b"   . helm-mini)
-;;        ("C-c C-f" . helm-do-ag-project-root)
-          ("C-c C-r" . helm-rg)
-          ("C-c C-g" . helm-ag)
-          ("C-c C-y" . helm-show-kill-ring)
-          )
-  )
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :demand t ; only necessary if you have the hook below
+  ;; if you want to have consult previews as you move around an
+  ;; auto-updating embark collect buffer
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+;; Helm
+;; (use-package helm
+;;   :ensure t
+;;   :init
+;;   (setq helm-buffer-details-flag nil)
+;;   (setq helm-allow-mouse t)
+;;   :config
+;;   (helm-popup-tip-mode t)
+;;   :bind (
+;; ;;        ("M-x"     . helm-M-x)
+;; ;;        ("C-x C-f" . helm-find-files)
+;; ;;        ("C-x b"   . helm-mini)
+;; ;;        ("C-c C-f" . helm-do-ag-project-root)
+;;           ("C-c C-r" . helm-rg)
+;;           ("C-c C-g" . helm-ag)
+;;           ("C-c C-y" . helm-show-kill-ring)
+;;           )
+;;   )
 
 ;; Use projectile for project managment
 (use-package projectile
   :ensure t
   :init
 ;  (setq projectile-completion-system 'helm)
-  (setq projectile-enable-caching nil)
+  (setq projectile-enable-caching t)
   :bind-keymap
   ("C-c p" . projectile-command-map)
   :config
@@ -477,6 +633,8 @@
 ;; Install the official Erlang mode
 (use-package erlang
   :defer t
+  :init
+  (setq erlang-check-module-name nil)
   :mode (("\\.erl?$" . erlang-mode)
          ("rebar\\.config$" . erlang-mode)
          ("relx\\.config$" . erlang-mode)
@@ -490,39 +648,41 @@
          ("Emakefile" . erlang-mode)
          ("\\.lux$" . lux-mode)
          )
+  :bind
+  (("C-c C-f" . consult-ripgrep-erl))
   )
+
+(defun consult-ripgrep-erl ()
+  "Search for erlang files"
+  (interactive)
+  (let ((consult-ripgrep-command "rg --null --line-buffered --color=ansi --max-columns=1000\
+   --no-heading --type erlang --type c --line-number . -e ARG OPTS"))
+    (consult-ripgrep)))
 
 ;; Include the Language Server Protocol Clients
 (use-package lsp-mode
   :ensure t
   :init
-  ;; erlang ls
   (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
-  (setq lsp-keymap-prefix "C-c l")
   (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-log-io t)
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-         (erlang-mode . lsp-deferred)
-         ;; if you want which-key integration
-         (lsp-mode . lsp-enable-which-key-integration))
+  (setq lsp-log-io nil)
+  :hook ((erlang-mode . lsp-deferred)
+         (lsp-mode . lsp-enable-which-key-integration)
+         (zig-mode . lsp-deferred))
   :commands (lsp lsp-deferred)
   :config
   (define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
-;;  (define-key lsp-mode-map (kbd "C-o") #'helm-lsp-workspace-symbol)
   )
 
 (use-package lsp-ui
   :ensure t
   :init
-  (setq lsp-ui-sideline-enable nil)
+  (setq lsp-ui-sideline-enable t)
+  (setq lsp-ui-sideline-show-hover nil)
+  (setq lsp-ui-doc-enable nil)
+  (setq lsp-ui-sideline-show-code-actions t)
   :commands lsp-ui-mode
   :hook ((lsp-mode . lsp-ui-mode))
-  )
-
-(use-package helm-lsp
-  :ensure t
-  :hook (helm-mode . helm-lsp)
-  :commands helm-lsp-workspace-symbol
   )
 
 ;; Which key
@@ -542,8 +702,7 @@
 ;; Yasnippet
 (use-package yasnippet
   :ensure t
-  :hook (;(prog-mode . yas-minor-mode)
-         (lsp-mode . yas-minor-mode))
+  :hook ((lsp-mode . yas-minor-mode))
   :config
   (diminish 'yas-minor-mode " y")
   )
@@ -557,17 +716,18 @@
   :ensure t
   :config
   (global-company-mode t)
+  (setq company-idle-delay 0.5)
   :diminish ""
   :bind
   (([C-tab] . company-complete)
    ([C-return] . company-complete)
   ))
 
-(use-package company-box
-  :ensure t
-  :hook (company-mode . company-box-mode)
-  :diminish ""
-  )
+;; (use-package company-box
+;;   :ensure t
+;;   :hook (company-mode . company-box-mode)
+;;   :diminish ""
+;;   )
 
 ;; Nyan mode
 (use-package nyan-mode
@@ -608,6 +768,11 @@
 ;; Don't use tabs for indentation
 (setq-default indent-tabs-mode nil)
 
+(defun diary-file ()
+  (interactive)
+  (let ((daily-name (format-time-string "diary_%Y-%m-%d")))
+    (find-file (expand-file-name (concat "~/cisco/diary/" daily-name ".org")))))
+
 ;; Cool helper fun
 (defun func-region (start end func)
   "run a function over the region between START and END in current buffer."
@@ -634,20 +799,24 @@
  '(Linum-format "%7i ")
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
- '(company-idle-delay 0.5)
  '(custom-safe-themes
-   '("c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "b0334e8e314ea69f745eabbb5c1817a173f5e9715493d63b592a8dc9c19a4de6" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "eb122e1df607ee9364c2dfb118ae4715a49f1a9e070b9d2eb033f1cefd50a908" "78c4238956c3000f977300c8a079a3a8a8d4d9fee2e68bad91123b58a4aa8588" "d14f3df28603e9517eb8fb7518b662d653b25b26e83bd8e129acea042b774298" "83e0376b5df8d6a3fbdfffb9fb0e8cf41a11799d9471293a810deb7586c131e6" "6b5c518d1c250a8ce17463b7e435e9e20faa84f3f7defba8b579d4f5925f60c1" "7661b762556018a44a29477b84757994d8386d6edee909409fabe0631952dad9" "1c596673c1d111e95a404bd12f8dd446cbcd47eee885271e21ffc98c3ac386cb" "3e038e9133010baa92e17a2c57f87336e91e6e76139d8c38d7d55d3c59a15967" "682a1161ee456e2d715ba30be61697fdbce8c08e23c2c6a1943f155e3e52f701" "147a0b0fce798587628774ae804a18a73f121e7e5c5fdf3a874ba584fdbe131d" "4e96c6ca1ab443d9804bcb55104848b25bdfda5ae665adeb218db1af07e7979a" "e503f6b2f45ecc5c5e295d1b3d84bb484206c4badbf716847a2445facf9f7495" "fe2a620695413fe5dcd74e03f0383e577effd7bb59527aa4d86444108d861504" "2f57ee6507f30d3228cdddadd0150e7b2fd85dd7c818c2d6485888c7249c37e8" default))
+   '("4eb6fa2ee436e943b168a0cd8eab11afc0752aebb5d974bba2b2ddc8910fca8f" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "b0334e8e314ea69f745eabbb5c1817a173f5e9715493d63b592a8dc9c19a4de6" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "eb122e1df607ee9364c2dfb118ae4715a49f1a9e070b9d2eb033f1cefd50a908" "78c4238956c3000f977300c8a079a3a8a8d4d9fee2e68bad91123b58a4aa8588" "d14f3df28603e9517eb8fb7518b662d653b25b26e83bd8e129acea042b774298" "83e0376b5df8d6a3fbdfffb9fb0e8cf41a11799d9471293a810deb7586c131e6" "6b5c518d1c250a8ce17463b7e435e9e20faa84f3f7defba8b579d4f5925f60c1" "7661b762556018a44a29477b84757994d8386d6edee909409fabe0631952dad9" "1c596673c1d111e95a404bd12f8dd446cbcd47eee885271e21ffc98c3ac386cb" "3e038e9133010baa92e17a2c57f87336e91e6e76139d8c38d7d55d3c59a15967" "682a1161ee456e2d715ba30be61697fdbce8c08e23c2c6a1943f155e3e52f701" "147a0b0fce798587628774ae804a18a73f121e7e5c5fdf3a874ba584fdbe131d" "4e96c6ca1ab443d9804bcb55104848b25bdfda5ae665adeb218db1af07e7979a" "e503f6b2f45ecc5c5e295d1b3d84bb484206c4badbf716847a2445facf9f7495" "fe2a620695413fe5dcd74e03f0383e577effd7bb59527aa4d86444108d861504" "2f57ee6507f30d3228cdddadd0150e7b2fd85dd7c818c2d6485888c7249c37e8" default))
  '(fci-rule-character-color "#202020")
  '(fci-rule-color "#151515")
+ '(flycheck-check-syntax-automatically '(save))
  '(flycheck-color-mode-line-show-running t)
  '(flymake-fringe-indicator-position 'left-fringe)
  '(flymake-note-bitmap '(exclamation-mark compilation-info))
+ '(highlight-indent-guides-delay 0)
+ '(highlight-indent-guides-method 'character)
+ '(highlight-indent-guides-responsive 'stack)
+ '(hl-line-overlay-priority 500)
  '(main-line-color1 "#1E1E1E")
  '(main-line-color2 "#111111")
  '(main-line-separator-style 'chamfer)
  '(nyan-mode nil)
  '(package-selected-packages
-   '(company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless selectrum dap-mode rainbow-delimiters company-fuzzy rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package company-lsp lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode magit haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet company helm-lsp benchmark-init exec-path-from-shell))
+   '(esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters company-fuzzy rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode magit haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
  '(powerline-color1 "#1E1E1E")
  '(powerline-color2 "#111111")
@@ -657,7 +826,8 @@
  '(sml/shorten-directory t)
  '(sml/show-file-name t)
  '(swiper-goto-start-of-match t)
- '(vc-follow-symlinks t))
+ '(vc-follow-symlinks t)
+ '(warning-suppress-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -665,8 +835,8 @@
  ;; If there is more than one, they won't work right.
  '(company-preview ((t (:foreground "#a0a0a0"))))
  '(company-preview-common ((t (:inherit company-preview))))
- '(company-scrollbar-bg ((t (:background "#494949"))))
- '(company-scrollbar-fg ((t (:background "#656565"))))
+ '(company-scrollbar-bg ((t (:background "#494949"))) t)
+ '(company-scrollbar-fg ((t (:background "#656565"))) t)
  '(company-tooltip ((t (:background "#494949" :foreground "white"))))
  '(company-tooltip-annotation ((t (:foreground "#cae682"))))
  '(company-tooltip-common ((t (:underline "#cae682"))))
@@ -694,9 +864,11 @@
  '(helm-selection ((t (:background "gray25" :distant-foreground "black"))))
  '(helm-source-header ((t (:foreground "#cae682" :weight bold))))
  '(highlight ((t (:background "#454545" :foreground "#ffffff" :underline nil))))
+ '(hl-line ((t (:extend t :underline nil))))
  '(ivy-current-match ((t (:extend t :background "#454545"))))
  '(ivy-minibuffer-match-face-2 ((t (:underline t :weight ultra-bold))))
  '(lsp-face-highlight-textual ((t (:weight bold))))
+ '(match ((t (:background "brown" :foreground "khaki"))))
  '(swiper-background-match-face-2 ((t (:inherit swiper-match-face-2))))
  '(swiper-line-face ((t (:inherit nil :background "#454545"))))
  '(swiper-match-face-2 ((t (:inverse-video t))))

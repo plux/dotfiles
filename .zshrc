@@ -69,7 +69,7 @@ export HISTTIMEFORMAT="[%F %T] "
 setopt HIST_FIND_NO_DUPS
 
 # Setup erlang
-. /home/hakan/install/erl-24.1/activate
+. /home/hakan/install/erl-25.0/activate
 
 # Setup elixir
 #test -s "$HOME/.kiex/scripts/kiex" && source "$HOME/.kiex/scripts/kiex"
@@ -195,13 +195,15 @@ export TAILF_OTP_CACHE=$HOME/tmp/otp-cache
 
 # workaround for shell prompt issues
 #export LUX_FLAGS='--shell_prompt_regexp=SH-PROMPT':
-#export TYPE=debug
 export TYPE=debug
 export ERL_AFLAGS="+pc unicode -kernel shell_history enabled -enable-feature all"
 export ERL_COMPILER_OPTIONS=[debug_info]
 TAILF_SEARCH_PATH="$HOME/tailf"
 alias tfenv='source ~/.bin/.tfenv'
 alias tfjump='source ~/.bin/.tfjump'
+alias branch='git rev-parse --abbrev-ref HEAD'
+alias push='git push --force-with-lease origin && bbmanager start-test -b $(branch)'
+alias PR='git push --force-with-lease origin && bbmanager create-pr -s "$(branch)" -d trunk -t "$(branch)" -m "" && bbmanager start-test -b $(branch)'
 # set to empty to silence direnv logging
 export DIRENV_LOG_FORMAT=""
 eval "$(direnv hook zsh)"
