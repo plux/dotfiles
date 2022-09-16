@@ -1,3 +1,13 @@
+[interactive]
+    diffFilter = delta --features=interactive
+
+[delta]
+    features = decorations
+    line-numbers = true
+
+[merge]
+  conflictstyle = diff3
+
 [rerere]
 	enabled = true
 [alias]
@@ -8,7 +18,7 @@
 [push]
 	default = current
 [core]
-	editor = emacs
+	editor = emacsclient -a '' -c
 	quotepath = false
 [github]
 	user = plux
@@ -19,7 +29,7 @@
 	gpgsign = true
 
 [alias]
-  wip = for-each-ref --sort='-authordate:iso8601' --format=' %(color:green)%(authordate:relative)%09%(color:white)%(refname:short)' refs/heads
+  wip = for-each-ref --sort='authordate:iso8601' --format=' %(color:green)%(authordate:relative)%09%(color:white)%(refname:short)' refs/heads
 
 [url "git@github.com:"]
 	insteadOf = https://github.com/

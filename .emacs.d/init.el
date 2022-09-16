@@ -45,6 +45,44 @@
   (compile (format "source %senv.sh; make --keep-going LUX_FILES=%s"
                    (projectile-project-root)
                    (file-name-nondirectory (buffer-file-name)))))
+
+
+(defun tailf-compile ()
+  "Compile in tailf."
+  (interactive ())
+  (compile (format "source %senv.sh; make -j12"
+                   (projectile-project-root))))
+
+(defun tailf-eunit ()
+  "Run eunit test in tailf."
+  (interactive ())
+  (compile (format "make -C ../test/eunit test-%s"
+                   (erlang-get-module))))
+
+
+(defun tailf-ct-suite ()
+  "Run ct suite in tailf."
+  (interactive ())
+  (compile (format "make build test SUITES=\"%s\""
+                   (erlang-get-module))))
+
+(defun tailf-ct-case ()
+  "Run ct testcase in tailf."
+  (interactive ())
+  (mark-defun)
+  (if (and (erlang-get-module) (erlang-get-function-name))
+      (compile (format "make build test SUITES=\"%s -case %s\""
+                       (erlang-get-module)
+                       (erlang-get-function-name))))
+  (unmark))
+
+
+;; (use-package corfu-terminal
+;;   :config
+;;   (unless (display-graphic-p)
+;;     (corfu-terminal-mode +1))
+;;   )
+
 ;; Packages
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")))
@@ -129,6 +167,15 @@
                                            try-expand-line))
   :bind
   ("C-'" . hippie-expand)
+  )
+
+(use-package leetcode
+  :ensure t
+  :init
+  (setq leetcode-prefer-language "python3")
+  (setq leetcode-prefer-sql "mysql")
+  (setq leetcode-save-solutions t)
+  (setq leetcode-directory "~/leetcode")  
   )
 
 ;; Use meta + arrowkeys to switch windows

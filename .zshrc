@@ -20,7 +20,7 @@ ZSH_THEME="plux"
 #
 
 ## Aliases
-alias e="emacs -nw"
+alias e="emacsclient -c -n"
 
 # Set to this to use case-sensitive completion
 # CASE_SENSITIVE="true"
@@ -196,6 +196,8 @@ export TAILF_OTP_CACHE=$HOME/tmp/otp-cache
 # workaround for shell prompt issues
 #export LUX_FLAGS='--shell_prompt_regexp=SH-PROMPT':
 #export TYPE=debug
+export TYPE=debug
+export ERL_AFLAGS="+pc unicode -kernel shell_history enabled -enable-feature all"
 export ERL_COMPILER_OPTIONS=[debug_info]
 TAILF_SEARCH_PATH="$HOME/tailf"
 alias tfenv='source ~/.bin/.tfenv'
