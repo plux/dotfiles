@@ -77,7 +77,7 @@
       (compile (format "make build test SUITES=\"%s -case %s\""
                        (erlang-get-module)
                        (erlang-get-function-name))))
-  (unmark))
+  (deactivate-mark))
 
 
 ;; (use-package corfu-terminal
@@ -168,6 +168,7 @@
 
 
 (use-package doom-modeline
+  :ensure t
   :hook (after-init . doom-modeline-mode)
   :custom
   (doom-modeline-height 25)
@@ -365,25 +366,27 @@
   )
 
 ;; Popper mode
-(use-package popper
-  :disabled t
-  :init
-  (setq popper-group-function #'popper-group-by-projectile)
-  (setq popper-reference-buffers
-        '("\\*Messages\\*"
-          "\\*compilation\\*"
-          "\\*Compile-Log\\*"
-          "\\*Occur\\*"
-          "^magit:"
-          "\\*Backtrace\\*"
-          "Output\\*$"
-          magit-mode
-          help-mode
-          compilation-mode))
-  (popper-mode +1))
+;; (use-package popper
+;;   :disabled t
+;;   :init
+;;   (setq popper-group-function #'popper-group-by-projectile)
+;;   (setq popper-reference-buffers
+;;         '("\\*Messages\\*"
+;;           "\\*compilation\\*"
+;;           "\\*Compile-Log\\*"
+;;           "\\*Occur\\*"
+;;           "^magit:"
+;;           "\\*Backtrace\\*"
+;;           "Output\\*$"
+;;           magit-mode
+;;           help-mode
+;;           compilation-mode))
+;;   (popper-mode +1))
 
 ;; Marginalia
 (use-package marginalia
+  :ensure t
+
   ;; Either bind `marginalia-cycle` globally or only in the minibuffer
   :bind (("M-A" . marginalia-cycle)
          :map minibuffer-local-map
@@ -649,7 +652,11 @@
          ("\\.lux$" . lux-mode)
          )
   :bind
-  (("C-c C-f" . consult-ripgrep-erl))
+  (("C-c C-f" . consult-ripgrep-erl)
+   ("C-c C-t C-t" . tailf-ct-case)
+   ("C-c C-t C-c" . tailf-compile)
+   ("C-c C-t C-s" . tailf-ct-suite)
+   ("C-c C-t C-e" . tailf-eunit))
   )
 
 (defun consult-ripgrep-erl ()
@@ -770,8 +777,16 @@
 
 (defun diary-file ()
   (interactive)
-  (let ((daily-name (format-time-string "diary_%Y-%m-%d")))
-    (find-file (expand-file-name (concat "~/cisco/diary/" daily-name ".org")))))
+  (let ((daily-name (format-time-string "diary_%Y-%m-%d.org"))
+        (diary-files (reverse (directory-files "~/cisco/diary/" nil "^diary.*.org$")))
+        )
+    (find-file (expand-file-name (concat "~/cisco/diary/" daily-name)))
+    (if (car diary-files)
+        (if (equal (car diary-files) daily-name)
+            (message "exists")
+          (insert-file-contents (car diary-files))))))
+
+
 
 ;; Cool helper fun
 (defun func-region (start end func)
@@ -816,7 +831,7 @@
  '(main-line-separator-style 'chamfer)
  '(nyan-mode nil)
  '(package-selected-packages
-   '(esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters company-fuzzy rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode magit haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+   '(doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters company-fuzzy rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode magit haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
  '(powerline-color1 "#1E1E1E")
  '(powerline-color2 "#111111")
