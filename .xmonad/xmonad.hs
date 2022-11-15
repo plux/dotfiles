@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-deprecations #-}
 import XMonad
 import XMonad.Util.EZConfig
 import XMonad.Config.Xfce
@@ -80,6 +81,7 @@ myKeysP =
   , ("M-d",           spawn "dmenu_run -l 30 -sb '#494949' -p run")
   , ("M-p",           spawn "~/.bin/passmenu")
   , ("M-x",           spawn "~/.bin/dswitcher")
+  , ("M-o",           spawn "emacsclient --eval \"(emacs-everywhere)\"")
   ]
   ++
   [ (mask ++ "M-" ++ [key], screenWorkspace scr >>= flip whenJust (windows . action))
