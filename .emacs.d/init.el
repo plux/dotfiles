@@ -80,11 +80,12 @@
   (deactivate-mark))
 
 
-;; (use-package corfu-terminal
-;;   :config
-;;   (unless (display-graphic-p)
-;;     (corfu-terminal-mode +1))
-;;   )
+(use-package corfu-terminal
+  :ensure t
+  :config
+  (unless (display-graphic-p)
+    (corfu-terminal-mode +1))
+  )
 
 
 ;; Packages
@@ -97,13 +98,13 @@
   :init
   (all-the-icons-completion-mode))
 
-;; (use-package kind-icon
-;;   :ensure t
-;;   :after corfu
-;;   :custom
-;;   (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
-;;   :config
-;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+(use-package kind-icon
+  :ensure t
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
 ;; (use-package corfu
 ;;   ;; Optional customizations
@@ -165,6 +166,64 @@
 ;;   (setq-local completion-styles '(orderless)
 ;;               completion-category-defaults nil))
 ;; (add-hook 'lsp-mode-hook #'corfu-lsp-setup)
+
+(use-package corfu
+  :ensure t
+  :hook (lsp-completion-mode . kb/corfu-setup-lsp) ; Use corfu for lsp completion
+  :custom
+  ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
+  ;; want to perform completion
+  (tab-always-indent 'complete)
+  (completion-cycle-threshold nil)      ; Always show candidates in menu
+
+  (corfu-auto 't)
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.25)
+  ;; (corfu-min-width 30)
+  ;; (corfu-max-width corfu-min-width)     ; Always have the same width
+  (corfu-count 14)
+  (corfu-scroll-margin 4)
+  (corfu-cycle nil)
+
+  ;; `nil' means to ignore `corfu-separator' behavior, that is, use the older
+  ;; `corfu-quit-at-boundary' = nil behavior. Set this to separator if using
+  ;; `corfu-auto' = `t' workflow (in that case, make sure you also set up
+  ;; `corfu-separator' and a keybind for `corfu-insert-separator', which my
+  ;; configuration already has pre-prepared). Necessary for manual corfu usage with
+  ;; orderless, otherwise first component is ignored, unless `corfu-separator'
+  ;; is inserted.
+  (corfu-quit-at-boundary nil)
+  (corfu-separator ?\s)            ; Use space
+  (corfu-quit-no-match 'separator) ; Don't quit if there is `corfu-separator' inserted
+  ;; (corfu-preview-current 'insert)  ; Preview first candidate. Insert on input if only one
+  (corfu-preview-current nil)
+  ;(corfu-preselect-first t)        ; Preselect first candidate?
+
+  ;; Other
+  (corfu-echo-documentation nil)        ; Already use corfu-doc
+  (lsp-completion-provider :none)       ; Use corfu instead for lsp completions
+  :init
+  (global-corfu-mode)
+  :config
+  ;; Setup lsp to use corfu for lsp completion
+  (defun kb/corfu-setup-lsp ()
+    "Use orderless completion style with lsp-capf instead of the
+default lsp-passthrough."
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless))))
+
+;; (use-package corfu-doc
+;;   :after corfu
+;;   :hook (corfu-mode . corfu-doc-mode)
+;;   :custom
+;;   (corfu-doc-delay 0.5)
+;;   (corfu-doc-max-width 70)
+;;   (corfu-doc-max-height 20)
+
+;;   ;; NOTE 2022-02-05: I've also set this in the `corfu' use-package to be
+;;   ;; extra-safe that this is set when corfu-doc is loaded. I do not want
+;;   ;; documentation shown in both the echo area and in the `corfu-doc' popup.
+;;   (corfu-echo-documentation nil))
 
 
 (use-package doom-modeline
@@ -233,7 +292,6 @@
     ("C-`"   . popper-toggle-latest)
     ("M-`"   . popper-cycle)
     ("C-M-`" . popper-toggle-type)
-    ("C-o"   . lsp-rename)
     ))
 
 (defun run-projectile-invalidate-cache (&rest _args)
@@ -412,9 +470,6 @@
   :defer t
   :init
   (setq completion-styles '(orderless basic))
-  ;; Persist history over Emacs restarts
-  ;; Optional performance optimization
-  ;; by highlighting only the visible candidates.
   )
 
 (setq completion-in-region-function
@@ -679,14 +734,17 @@
   :commands (lsp lsp-deferred)
   :config
   (define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
+  :bind
+  (("C-o"  . lsp-rename)
+   ("M-o" . lsp-execute-code-action))
   )
 
 (use-package lsp-ui
   :ensure t
   :init
   (setq lsp-ui-sideline-enable t)
-  (setq lsp-ui-sideline-show-hover nil)
-  (setq lsp-ui-doc-enable nil)
+ ; (setq lsp-ui-sideline-show-hover nil)
+;  (setq lsp-ui-doc-enable nil)
   (setq lsp-ui-sideline-show-code-actions t)
   :commands lsp-ui-mode
   :hook ((lsp-mode . lsp-ui-mode))
@@ -719,16 +777,16 @@
 
 
 ;; Company
-(use-package company
-  :ensure t
-  :config
-  (global-company-mode t)
-  (setq company-idle-delay 0.5)
-  :diminish ""
-  :bind
-  (([C-tab] . company-complete)
-   ([C-return] . company-complete)
-  ))
+;; (use-package company
+;;   :ensure t
+;;   :config
+;;   (global-company-mode t)
+;;   (setq company-idle-delay 0.5)
+;;   :diminish ""
+;;   :bind
+;;   (([C-tab] . company-complete)
+;;    ([C-return] . company-complete)
+;;   ))
 
 ;; (use-package company-box
 ;;   :ensure t
