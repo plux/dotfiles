@@ -57,3 +57,8 @@
 	helper = !gh auth git-credential
 [init]
 	templatedir = /home/hakan/.git-templates
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

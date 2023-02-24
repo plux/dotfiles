@@ -207,3 +207,7 @@ alias PR='git push --force-with-lease origin && bbmanager create-pr -s "$(branch
 # set to empty to silence direnv logging
 export DIRENV_LOG_FORMAT=""
 eval "$(direnv hook zsh)"
+
+export LDFLAGS="-L/usr/lib/openssl-1.1"
+export CPPFLAGS="-I/usr/include/openssl-1.1"
+export USE_SSL_DIR="/usr/lib/openssl-1.1"
