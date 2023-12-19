@@ -12,7 +12,7 @@
                              (float-time
                               (time-subtract after-init-time before-init-time)))
                      gcs-done)
-            (setq gc-cons-threshold (* 10 1000 1000))))
+            (setq gc-cons-threshold (* 100 1000 1000))))
 
 ;(require 'ccls)
 ;; Profile emacs startup
@@ -81,6 +81,42 @@
   (deactivate-mark))
 
 
+(defun generate-compiledb ()
+  "Generate compiledb"
+  (interactive ())
+  (compile (format "source %senv.sh; make clean; make all | compiledb -v"
+                   (projectile-project-root))))
+(setq c-basic-offset 4)
+
+(defun shift-region (distance)
+  (let ((mark (mark)))
+    (save-excursion
+      (indent-rigidly (region-beginning) (region-end) distance)
+      (push-mark mark t t)
+      ;; Tell the command loop not to deactivate the mark
+      ;; for transient mark mode
+      (setq deactivate-mark nil))))
+
+(defun shift-right ()
+  (interactive)
+  (shift-region 1))
+
+(defun shift-left ()
+  (interactive)
+  (shift-region -1))
+
+;; Bind (shift-right) and (shift-left) function to your favorite keys. I use
+;; the following so that Ctrl-Shift-Right Arrow moves selected text one
+;; column to the right, Ctrl-Shift-Left Arrow moves selected text one
+;; column to the left:
+
+(global-set-key [C-S-right] 'shift-right)
+(global-set-key [C-S-left] 'shift-left)
+
+;; Packages
+(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+                         ("melpa" . "http://melpa.org/packages/")))
+
 (use-package corfu-terminal
   :ensure t
   :config
@@ -88,25 +124,33 @@
     (corfu-terminal-mode +1))
   )
 
-
-;; Packages
-(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                         ("melpa" . "http://melpa.org/packages/")))
-
-(use-package all-the-icons-completion
+(use-package jinx
   :ensure t
-  :after (marginalia all-the-icons)
-  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
-  :init
-  (all-the-icons-completion-mode))
+  :hook (emacs-startup . global-jinx-mode)
+  :bind ([remap ispell-word] . jinx-correct))
 
-(use-package kind-icon
+(use-package dumb-jump
   :ensure t
-  :after corfu
-  :custom
-  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
   :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate)
+  (setq xref-show-definitions-function #'xref-show-definitions-completing-read))
+
+;; Disabled since icons get the wrong size..
+
+;; (use-package all-the-icons-completion
+;;   :ensure t
+;;   :after (marginalia all-the-icons)
+;;   :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+;;   :init
+;;   (all-the-icons-completion-mode))
+
+;; (use-package kind-icon
+;;   :ensure t
+;;   :after corfu
+;;   :custom
+;;   (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+;;   :config
+;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
 ;; (use-package corfu
 ;;   ;; Optional customizations
@@ -186,7 +230,7 @@
   (corfu-auto-delay 0.25)
   ;; (corfu-min-width 30)
   ;; (corfu-max-width corfu-min-width)     ; Always have the same width
-  (corfu-count 14)
+  ;;(corfu-count 14)
   (corfu-scroll-margin 4)
   (corfu-cycle nil)
 
@@ -235,7 +279,7 @@ default lsp-passthrough."
   :ensure t
   :hook (after-init . doom-modeline-mode)
   :custom
-  (doom-modeline-height 25)
+  (doom-modeline-height 65)
   (doom-modeline-bar-width 1)
   (doom-modeline-icon nil)
   (doom-modeline-major-mode-icon nil)
@@ -284,6 +328,11 @@ default lsp-passthrough."
   (setq recentf-max-saved-items 25)
   ;; View mode
   (setq view-read-only t)
+  ;; Store backups
+  (setq backup-directory-alist
+        `((".*" . "~/.emacs-backup/")))
+  (setq auto-save-file-name-transforms
+        `((".*" "~/.emacs-backup/" t)))
   :bind
   ( ;("M-g"    . goto-line)
     ([S-down] . scroll-one-line-up)
@@ -696,6 +745,11 @@ default lsp-passthrough."
   (editorconfig-mode 1)
   :diminish "")
 
+(use-package flymake-shellcheck
+  :commands flymake-shellcheck-load
+  :init
+  (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
+
 ;; Install the official Erlang mode
 (use-package erlang
   :ensure t
@@ -736,7 +790,7 @@ default lsp-passthrough."
   :init
   (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
   (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-log-io nil)
+  (setq lsp-log-io t)
   :hook ((erlang-mode . lsp-deferred)
          (lsp-mode . lsp-enable-which-key-integration)
          (zig-mode . lsp-deferred))
@@ -780,8 +834,13 @@ default lsp-passthrough."
   :config
   )
 
-;; Yang
-
+(add-to-list 'load-path "/home/hakan/.emacs.d/lisp")
+(use-package chatgpt-arcana
+;  :ensure t
+  :defer t
+  :init
+  (setq chatgpt-arcana-api-key "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")
+  )
 
 
 ;; Company
@@ -804,7 +863,6 @@ default lsp-passthrough."
 
 ;; Nyan mode
 (use-package nyan-mode
-  :disabled
   :if window-system
   :ensure t
   :config
@@ -882,6 +940,7 @@ default lsp-passthrough."
    [default default default italic underline success warning error])
  '(custom-safe-themes
    '("4eb6fa2ee436e943b168a0cd8eab11afc0752aebb5d974bba2b2ddc8910fca8f" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "b0334e8e314ea69f745eabbb5c1817a173f5e9715493d63b592a8dc9c19a4de6" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "eb122e1df607ee9364c2dfb118ae4715a49f1a9e070b9d2eb033f1cefd50a908" "78c4238956c3000f977300c8a079a3a8a8d4d9fee2e68bad91123b58a4aa8588" "d14f3df28603e9517eb8fb7518b662d653b25b26e83bd8e129acea042b774298" "83e0376b5df8d6a3fbdfffb9fb0e8cf41a11799d9471293a810deb7586c131e6" "6b5c518d1c250a8ce17463b7e435e9e20faa84f3f7defba8b579d4f5925f60c1" "7661b762556018a44a29477b84757994d8386d6edee909409fabe0631952dad9" "1c596673c1d111e95a404bd12f8dd446cbcd47eee885271e21ffc98c3ac386cb" "3e038e9133010baa92e17a2c57f87336e91e6e76139d8c38d7d55d3c59a15967" "682a1161ee456e2d715ba30be61697fdbce8c08e23c2c6a1943f155e3e52f701" "147a0b0fce798587628774ae804a18a73f121e7e5c5fdf3a874ba584fdbe131d" "4e96c6ca1ab443d9804bcb55104848b25bdfda5ae665adeb218db1af07e7979a" "e503f6b2f45ecc5c5e295d1b3d84bb484206c4badbf716847a2445facf9f7495" "fe2a620695413fe5dcd74e03f0383e577effd7bb59527aa4d86444108d861504" "2f57ee6507f30d3228cdddadd0150e7b2fd85dd7c818c2d6485888c7249c37e8" default))
+ '(erlang-check-module-name nil)
  '(fci-rule-character-color "#202020")
  '(fci-rule-color "#151515")
  '(flycheck-check-syntax-automatically '(save))
@@ -892,12 +951,14 @@ default lsp-passthrough."
  '(highlight-indent-guides-method 'character)
  '(highlight-indent-guides-responsive 'stack)
  '(hl-line-overlay-priority 500)
+ '(lsp-erlang-server 'erlang-ls)
+ '(lsp-file-watch-threshold 1000)
  '(main-line-color1 "#1E1E1E")
  '(main-line-color2 "#111111")
  '(main-line-separator-style 'chamfer)
  '(nyan-mode nil)
  '(package-selected-packages
-   '(default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode magit haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+   '(dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
  '(powerline-color1 "#1E1E1E")
  '(powerline-color2 "#111111")
@@ -914,6 +975,7 @@ default lsp-passthrough."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(default ((t (:inherit nil :extend nil :stipple nil :background "#242424" :foreground "#f6f3e8" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 200 :width normal :foundry "ADBO" :family "Source Code Pro"))))
  '(company-preview ((t (:foreground "#a0a0a0"))))
  '(company-preview-common ((t (:inherit company-preview))))
  '(company-scrollbar-bg ((t (:background "#494949"))) t)
