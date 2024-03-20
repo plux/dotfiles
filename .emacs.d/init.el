@@ -137,20 +137,22 @@
 
 ;; Disabled since icons get the wrong size..
 
-;; (use-package all-the-icons-completion
-;;   :ensure t
-;;   :after (marginalia all-the-icons)
-;;   :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
-;;   :init
-;;   (all-the-icons-completion-mode))
+(use-package all-the-icons-completion
+  :ensure t
+  :after (marginalia all-the-icons)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+  :init
+  (all-the-icons-completion-mode))
 
-;; (use-package kind-icon
-;;   :ensure t
-;;   :after corfu
-;;   :custom
-;;   (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
-;;   :config
-;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
+(use-package kind-icon
+  :ensure t
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+
 
 ;; (use-package corfu
 ;;   ;; Optional customizations
@@ -189,22 +191,25 @@
 ;;   (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
 
 ;; ;; Add extensions
-;; (use-package cape
-;;   :init
-;;   ;; Add `completion-at-point-functions', used by `completion-at-point'.
-;;   (add-to-list 'completion-at-point-functions #'cape-file)
-;;   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-history)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-tex)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-;;   ;;(add-to-list 'completion-at-point-functions #'cape-line)
-;;   )
+(use-package cape
+  :ensure t
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;;(add-to-list 'completion-at-point-functions #'cape-history)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  ;;(add-to-list 'completion-at-point-functions #'cape-tex)
+  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  )
+
+
 
 ;; Needed to enable corfu, otherwise conflict with company-mode
 ;; (setq lsp-completion-provider :none)
@@ -216,6 +221,7 @@
 (use-package swiper
   :ensure t
   )
+
 (use-package corfu
   :ensure t
   :hook (lsp-completion-mode . kb/corfu-setup-lsp) ; Use corfu for lsp completion
@@ -253,6 +259,9 @@
   (lsp-completion-provider :none)       ; Use corfu instead for lsp completions
   :init
   (global-corfu-mode)
+  :bind
+  (("C-<tab>" . completion-at-point)
+   )
   :config
   ;; Setup lsp to use corfu for lsp completion
   (defun kb/corfu-setup-lsp ()
@@ -427,7 +436,6 @@ default lsp-passthrough."
     )
   (flycheck-add-mode 'lux 'lux-mode)
   (setq flycheck-checkers (cons 'lux flycheck-checkers))
-
   ;; Enable flycheck globally
   (global-flycheck-mode t)
   :bind
@@ -448,7 +456,7 @@ default lsp-passthrough."
   :config
   (winner-mode 1)
   :bind ( ("C-c u" . winner-undo)
-          ("C-c r" . winnder-redo))
+          ("C-c r" . winner-redo))
   )
 
 ;; Scrolling keybindings
@@ -736,7 +744,15 @@ default lsp-passthrough."
   )
 
 (use-package eldoc
-  :diminish "")
+  :ensure t
+  :init
+  (setq eldoc-echo-area-use-multiline-p t)
+  )
+
+(use-package eldoc-box
+  :ensure t
+  :bind
+  ("C-h D" . eldoc-box-help-at-point))
 
 ;; EditorConfig
 (use-package editorconfig
@@ -785,33 +801,104 @@ default lsp-passthrough."
     (consult-ripgrep)))
 
 ;; Include the Language Server Protocol Clients
-(use-package lsp-mode
+;; (use-package lsp-mode
+;;   :ensure t
+;;   :init
+;;   (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
+;;   (setq lsp-headerline-breadcrumb-enable nil)
+;;   (setq lsp-log-io t)
+;;   :hook ((erlang-mode . lsp-deferred)
+;;          (lsp-mode . lsp-enable-which-key-integration)
+;;          (zig-mode . lsp-deferred))
+;;   :commands (lsp lsp-deferred)
+;;   :config
+;;   (define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
+;;   :bind
+;;   (("C-o"  . lsp-rename)
+;;    ("M-o" . lsp-execute-code-action)
+;;   ))
+
+;; (use-package lsp-ui
+;;   :ensure t
+;;   :init
+;;   (setq lsp-ui-sideline-enable t)
+;;  ; (setq lsp-ui-sideline-show-hover nil)
+;; ;  (setq lsp-ui-doc-enable nil)
+;;   (setq lsp-ui-sideline-show-code-actions t)
+;;   :commands lsp-ui-mode
+;;   :hook ((lsp-mode . lsp-ui-mode))
+;;   )
+
+(defun lsp-booster--advice-json-parse (old-fn &rest args)
+  "Try to parse bytecode instead of json."
+  (or
+   (when (equal (following-char) ?#)
+     (let ((bytecode (read (current-buffer))))
+       (when (byte-code-function-p bytecode)
+         (funcall bytecode))))
+   (apply old-fn args)))
+(advice-add (if (progn (require 'json)
+                       (fboundp 'json-parse-buffer))
+                'json-parse-buffer
+              'json-read)
+            :around
+            #'lsp-booster--advice-json-parse)
+
+(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+  "Prepend emacs-lsp-booster command to lsp CMD."
+  (let ((orig-result (funcall old-fn cmd test?)))
+    (if (and (not test?)                             ;; for check lsp-server-present?
+             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+             lsp-use-plists
+             (not (functionp 'json-rpc-connection))  ;; native json-rpc
+             (executable-find "emacs-lsp-booster"))
+        (progn
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+      orig-result)))
+(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+
+(use-package eglot
   :ensure t
   :init
   (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
-  (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-log-io t)
-  :hook ((erlang-mode . lsp-deferred)
-         (lsp-mode . lsp-enable-which-key-integration)
-         (zig-mode . lsp-deferred))
-  :commands (lsp lsp-deferred)
-  :config
-  (define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
+  ;;(setq exec-path (cons "/home/hakan/git/erlang_ls/dev" exec-path))
+  :hook (erlang-mode . eglot-ensure)
   :bind
-  (("C-o"  . lsp-rename)
-   ("M-o" . lsp-execute-code-action)
-  ))
-
-(use-package lsp-ui
-  :ensure t
-  :init
-  (setq lsp-ui-sideline-enable t)
- ; (setq lsp-ui-sideline-show-hover nil)
-;  (setq lsp-ui-doc-enable nil)
-  (setq lsp-ui-sideline-show-code-actions t)
-  :commands lsp-ui-mode
-  :hook ((lsp-mode . lsp-ui-mode))
+  (("C-o" . eglot-rename)
+   ("M-o" . eglot-code-actions)
+   ("C-c C-p" . flymake-goto-prev-error)
+   ("C-c C-n" . flymake-goto-next-error)
+   ("C-c C-e" . consult-flymake)
+   )
   )
+
+(use-package eglot-booster
+  :after eglot
+  :config (eglot-booster-mode))
+
+(use-package multiple-cursors
+  :ensure t
+  :bind
+  (("C-c C-l" . mc/edit-lines)
+   ("C-c C-SPC" . mc/mark-all-dwim)
+   ("C-<" . mc/mark-previous-like-this)
+   ("C->" . mc/mark-next-like-this)
+   ("C-M-<" . mc/mark-previous-like-this-symbol)
+   ("C-M->" . mc/mark-next-like-this-symbol)
+   )
+  )
+
+
+;;(add-hook 'erlang-mode-hook 'eglot-ensure)
+
+;; (use-package flycheck-eglot
+;;   :ensure t
+;;   :after (flycheck eglot)
+;;   :config
+;;   (global-flycheck-eglot-mode 1))
+
+
 
 ;; Which key
 (use-package which-key
@@ -944,6 +1031,8 @@ default lsp-passthrough."
  '(fci-rule-character-color "#202020")
  '(fci-rule-color "#151515")
  '(flycheck-check-syntax-automatically '(save))
+ '(flycheck-checkers
+   '(eglot-check lux yang ada-gnat asciidoctor asciidoc awk-gawk bazel-build-buildifier bazel-module-buildifier bazel-starlark-buildifier bazel-workspace-buildifier c/c++-clang c/c++-gcc c/c++-cppcheck cfengine chef-foodcritic coffee coffee-coffeelint coq css-csslint css-stylelint cuda-nvcc cwl d-dmd dockerfile-hadolint elixir-credo emacs-lisp emacs-lisp-checkdoc ember-template eruby-erubis eruby-ruumba fortran-gfortran go-gofmt go-golint go-vet go-build go-test go-errcheck go-unconvert go-staticcheck groovy haml handlebars haskell-stack-ghc haskell-ghc haskell-hlint html-tidy javascript-eslint javascript-jshint javascript-standard json-jsonlint json-python-json json-jq jsonnet less less-stylelint llvm-llc lua-luacheck lua markdown-markdownlint-cli markdown-mdl nix nix-linter opam perl perl-perlcritic php php-phpmd php-phpcs processing proselint protobuf-protoc protobuf-prototool pug puppet-parser puppet-lint python-flake8 python-pylint python-pycompile python-pyright python-mypy r-lintr racket rpm-rpmlint rst-sphinx rst ruby-rubocop ruby-standard ruby-reek ruby-rubylint ruby ruby-jruby scala scala-scalastyle scheme-chicken scss-lint scss-stylelint sass/scss-sass-lint sass scss sh-bash sh-posix-dash sh-posix-bash sh-zsh sh-shellcheck slim slim-lint sql-sqlint systemd-analyze tcl-nagelfar terraform terraform-tflint tex-chktex tex-lacheck texinfo textlint typescript-tslint verilog-verilator vhdl-ghdl xml-xmlstarlet xml-xmllint yaml-jsyaml yaml-ruby yaml-yamllint))
  '(flycheck-color-mode-line-show-running t)
  '(flymake-fringe-indicator-position 'left-fringe)
  '(flymake-note-bitmap '(exclamation-mark compilation-info))
@@ -951,6 +1040,8 @@ default lsp-passthrough."
  '(highlight-indent-guides-method 'character)
  '(highlight-indent-guides-responsive 'stack)
  '(hl-line-overlay-priority 500)
+ '(kind-icon-default-style
+   '(:padding 0 :stroke 0 :margin -1 :radius 0 :height 0.5 :scale 1.0 :background nil))
  '(lsp-erlang-server 'erlang-ls)
  '(lsp-file-watch-threshold 1000)
  '(main-line-color1 "#1E1E1E")
@@ -958,7 +1049,9 @@ default lsp-passthrough."
  '(main-line-separator-style 'chamfer)
  '(nyan-mode nil)
  '(package-selected-packages
-   '(dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+   '(eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+ '(package-vc-selected-packages
+   '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster")))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
  '(powerline-color1 "#1E1E1E")
  '(powerline-color2 "#111111")
@@ -985,6 +1078,7 @@ default lsp-passthrough."
  '(company-tooltip-common ((t (:underline "#cae682"))))
  '(company-tooltip-search-selection ((t (:inherit highlight))))
  '(company-tooltip-selection ((t (:background "#656565" :foreground "white"))))
+ '(corfu-default ((t (:background "#191a1b"))))
  '(edts-face-error-line ((t (:underline "#ff0000"))))
  '(edts-face-error-mode-line ((t (:box (:line-width 1 :color "red")))))
  '(edts-face-failed-test-line ((t (:underline "#ff0000"))))
@@ -1012,6 +1106,7 @@ default lsp-passthrough."
  '(ivy-minibuffer-match-face-2 ((t (:underline t :weight ultra-bold))))
  '(lsp-face-highlight-textual ((t (:weight bold))))
  '(match ((t (:background "brown" :foreground "khaki"))))
+ '(my-kind-icon ((t (:background "#191a1b" :height 0.5))))
  '(swiper-background-match-face-2 ((t (:inherit swiper-match-face-2))))
  '(swiper-line-face ((t (:inherit nil :background "#454545"))))
  '(swiper-match-face-2 ((t (:inverse-video t))))
@@ -1019,3 +1114,4 @@ default lsp-passthrough."
 
 (put 'downcase-region 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
+
