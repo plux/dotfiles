@@ -34,15 +34,29 @@
   (require 'use-package))
 
 ;(require 'diminish)
-;(require 'bind-key)
+
+                                        ;(require 'bind-key)
+(add-to-list 'load-path "~/.emacs.d/lisp")
+
+
+(use-package emacs-everywhere)
+(require 'yang-mode nil t)
+
 
 (eval-when-compile
   (require 'lux-mode))
+
 (use-package lux-mode
   :ensure t
   :bind
   ("C-c C-c" . lux-run-test)
   )
+
+(defun launch-terminal ()
+  "Launch a terminal."
+  (interactive ())
+  (shell-command "gnome-terminal"))
+
 
 (defun lux-run-test ()
   "Run current lux test."
@@ -86,7 +100,9 @@
   (interactive ())
   (compile (format "source %senv.sh; make clean; make all | compiledb -v"
                    (projectile-project-root))))
-(setq c-basic-offset 4)
+
+(setq c-basic-offset 2)
+(setq ring-bell-function 'ignore)
 
 (defun shift-region (distance)
   (let ((mark (mark)))
@@ -115,10 +131,12 @@
 
 ;; Packages
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                         ("melpa" . "http://melpa.org/packages/")))
+                         ("melpa" . "http://melpa.org/packages/")
+                         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+                         ))
 
 (use-package corfu-terminal
-  :ensure t
+;  :ensure t
   :config
   (unless (display-graphic-p)
     (corfu-terminal-mode +1))
@@ -153,44 +171,6 @@
   :config
   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-
-;; (use-package corfu
-;;   ;; Optional customizations
-;;   :custom
-;;   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-;;   (corfu-auto nil)                 ;; Enable auto completion
-;;   (corfu-separator ?\s)          ;; Orderless field separator
-;;   (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-;;   (corfu-quit-no-match t)      ;; Never quit, even if there is no match
-;;   (corfu-preview-current t)    ;; Disable current candidate preview
-;;   ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
-;;   ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-;;   (corfu-echo-documentation nil) ;; Disable documentation in the echo area
-
-;;   ;; (corfu-scroll-margin 5)        ;; Use scroll margin
-;;   ;; Enable Corfu only for certain modes.
-;;   ;; :hook ((prog-mode . corfu-mode)
-;;   ;;        (shell-mode . corfu-mode)
-;;   ;;        (eshell-mode . corfu-mode))
-
-;;   ;; Recommended: Enable Corfu globally.
-;;   ;; This is recommended since Dabbrev can be used globally (M-/).
-;;   ;; See also `corfu-excluded-modes'.
-;;   ;;  :hook ((lsp-mode . corfu-doc-mode))
-;;   :init
-;;   (global-corfu-mode))
-
-;; ;; Use Dabbrev with Corfu!
-;; (use-package dabbrev
-;;   ;; Swap M-/ and C-M-/
-;;   :bind (("M-/" . dabbrev-completion)
-;;          ("C-M-/" . dabbrev-expand))
-;;   ;; Other useful Dabbrev configurations.
-;;   :custom
-;;   (dabbrev-expand)
-;;   (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
-
-;; ;; Add extensions
 (use-package cape
   :ensure t
   :init
@@ -209,15 +189,6 @@
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
   )
 
-
-
-;; Needed to enable corfu, otherwise conflict with company-mode
-;; (setq lsp-completion-provider :none)
-;; (defun corfu-lsp-setup ()
-;;   (setq-local completion-styles '(orderless)
-;;               completion-category-defaults nil))
-;; (add-hook 'lsp-mode-hook #'corfu-lsp-setup)
-
 (use-package swiper
   :ensure t
   )
@@ -230,8 +201,7 @@
   ;; want to perform completion
   (tab-always-indent 'complete)
   (completion-cycle-threshold nil)      ; Always show candidates in menu
-
-  (corfu-auto 't)
+  (corfu-auto t)
   (corfu-auto-prefix 4)
   (corfu-auto-delay 0.25)
   ;; (corfu-min-width 30)
@@ -355,6 +325,7 @@ default lsp-passthrough."
     ("C-`"   . popper-toggle-latest)
     ("M-`"   . popper-cycle)
     ("C-M-`" . popper-toggle-type)
+    ("C-c RET" . launch-terminal)
     ))
 
 (defun run-projectile-invalidate-cache (&rest _args)
@@ -379,15 +350,6 @@ default lsp-passthrough."
   ("C-'" . hippie-expand)
   )
 
-;; (use-package leetcode
-;;   :ensure t
-;;   :init
-;;   (setq leetcode-prefer-language "python3")
-;;   (setq leetcode-prefer-sql "mysql")
-;;   (setq leetcode-save-solutions t)
-;;   (setq leetcode-directory "~/leetcode")  
-;;   )
-
 ;; Use meta + arrowkeys to switch windows
 (use-package windmove
   :config
@@ -407,7 +369,7 @@ default lsp-passthrough."
   :ensure t
   :config
   ;; Add yang flycheck
-  (setq exec-path (cons "/home/hakan/tailf/trunk/bin" exec-path))
+  (setq exec-path (cons "~/dev/tailf/trunk/bin" exec-path))
   (flycheck-define-checker yang
     "A yang syntax checker using yanger."
 
@@ -423,8 +385,8 @@ default lsp-passthrough."
   (setq flycheck-error-list-minimum-level #'warning)
 
   ;; Add lux flycheck
-  (setq exec-path (cons "/home/hakan/tailf/trunk/system/test/bin" exec-path))
-  (setenv "TEST_DIR" "/home/hakan/tailf/trunk/system/test")
+  (setq exec-path (cons "~/dev/tailf/trunk/system/test/bin" exec-path))
+  (setenv "TEST_DIR" "~/dev/tailf/trunk/system/test")
   (flycheck-define-checker lux
     "A lux syntax checker using lux --mode validate."
     :command ("lux" "--mode" "validate" source-inplace)
@@ -444,12 +406,6 @@ default lsp-passthrough."
     ("C-c C-e" . flycheck-first-error)
     )
   )
-
-;(use-package flycheck-color-mode-line
-;  :hook
-;  (flycheck-mode . flycheck-color-mode-line-mode)
-;  )
-
 
 ;; Undo/Redo for window management (undo = C-c left, redo = C-c right)
 (use-package winner
@@ -484,24 +440,6 @@ default lsp-passthrough."
   :config
   (global-whitespace-mode t)
   )
-
-;; Popper mode
-;; (use-package popper
-;;   :disabled t
-;;   :init
-;;   (setq popper-group-function #'popper-group-by-projectile)
-;;   (setq popper-reference-buffers
-;;         '("\\*Messages\\*"
-;;           "\\*compilation\\*"
-;;           "\\*Compile-Log\\*"
-;;           "\\*Occur\\*"
-;;           "^magit:"
-;;           "\\*Backtrace\\*"
-;;           "Output\\*$"
-;;           magit-mode
-;;           help-mode
-;;           compilation-mode))
-;;   (popper-mode +1))
 
 ;; Marginalia
 (use-package marginalia
@@ -591,6 +529,9 @@ default lsp-passthrough."
          ;; ("M-e" . consult-isearch)                 ;; orig. isearch-edit-string
          ;; ("M-s e" . consult-isearch)               ;; orig. isearch-edit-string
          ;; ("M-s l" . consult-line)                 ;; required by consult-line to detect isearch
+         ("C-c i" . consult-imenu)
+         ("C-c b" . consult-bookmark)
+
          )
   ;; Enable automatic preview at point in the *Completions* buffer.
   ;; This is relevant when you use the default completion UI,
@@ -651,14 +592,6 @@ default lsp-passthrough."
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
   )
 
-;; ;; Selectrum
-;; (use-package selectrum
-;;   :init
-;;   :config
-;;   (selectrum-mode +1)
-;;   (setq orderless-skip-highlighting (lambda () selectrum-is-active))
-;;   (setq selectrum-highlight-candidates-function #'orderless-highlight-matches)
-;;   )
 
 (use-package vertico
   :ensure t
@@ -710,24 +643,6 @@ default lsp-passthrough."
   ;; auto-updating embark collect buffer
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
-;; Helm
-;; (use-package helm
-;;   :ensure t
-;;   :init
-;;   (setq helm-buffer-details-flag nil)
-;;   (setq helm-allow-mouse t)
-;;   :config
-;;   (helm-popup-tip-mode t)
-;;   :bind (
-;; ;;        ("M-x"     . helm-M-x)
-;; ;;        ("C-x C-f" . helm-find-files)
-;; ;;        ("C-x b"   . helm-mini)
-;; ;;        ("C-c C-f" . helm-do-ag-project-root)
-;;           ("C-c C-r" . helm-rg)
-;;           ("C-c C-g" . helm-ag)
-;;           ("C-c C-y" . helm-show-kill-ring)
-;;           )
-;;   )
 
 ;; Use projectile for project managment
 (use-package projectile
@@ -800,68 +715,28 @@ default lsp-passthrough."
    --no-heading --type erlang --type c --line-number . -e ARG OPTS"))
     (consult-ripgrep)))
 
-;; Include the Language Server Protocol Clients
-;; (use-package lsp-mode
-;;   :ensure t
-;;   :init
-;;   (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
-;;   (setq lsp-headerline-breadcrumb-enable nil)
-;;   (setq lsp-log-io t)
-;;   :hook ((erlang-mode . lsp-deferred)
-;;          (lsp-mode . lsp-enable-which-key-integration)
-;;          (zig-mode . lsp-deferred))
-;;   :commands (lsp lsp-deferred)
-;;   :config
-;;   (define-key lsp-mode-map [remap xref-find-references] #'lsp-find-references)
-;;   :bind
-;;   (("C-o"  . lsp-rename)
-;;    ("M-o" . lsp-execute-code-action)
-;;   ))
-
-;; (use-package lsp-ui
-;;   :ensure t
-;;   :init
-;;   (setq lsp-ui-sideline-enable t)
-;;  ; (setq lsp-ui-sideline-show-hover nil)
-;; ;  (setq lsp-ui-doc-enable nil)
-;;   (setq lsp-ui-sideline-show-code-actions t)
-;;   :commands lsp-ui-mode
-;;   :hook ((lsp-mode . lsp-ui-mode))
-;;   )
-
-(defun lsp-booster--advice-json-parse (old-fn &rest args)
-  "Try to parse bytecode instead of json."
-  (or
-   (when (equal (following-char) ?#)
-     (let ((bytecode (read (current-buffer))))
-       (when (byte-code-function-p bytecode)
-         (funcall bytecode))))
-   (apply old-fn args)))
-(advice-add (if (progn (require 'json)
-                       (fboundp 'json-parse-buffer))
-                'json-parse-buffer
-              'json-read)
-            :around
-            #'lsp-booster--advice-json-parse)
-
-(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-  "Prepend emacs-lsp-booster command to lsp CMD."
-  (let ((orig-result (funcall old-fn cmd test?)))
-    (if (and (not test?)                             ;; for check lsp-server-present?
-             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-             lsp-use-plists
-             (not (functionp 'json-rpc-connection))  ;; native json-rpc
-             (executable-find "emacs-lsp-booster"))
-        (progn
-          (message "Using emacs-lsp-booster for %s!" orig-result)
-          (cons "emacs-lsp-booster" orig-result))
-      orig-result)))
-(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+;(use-package gptel :ensure t)
+(add-to-list 'load-path "~/git/copilot.el")
+(use-package copilot
+    :init
+    :config
+    (setq copilot-indent-offset-warning-disable t)
+    (setq copilot-max-char 1000000)
+    :hook ((prog-mode . copilot-mode)
+           (lux-mode . copilot-mode)
+           (yang-mode . copilot-mode))
+    :bind
+    (("C-c c" . copilot-complete)
+     ("C-c y" . copilot-accept-completion-by-line)
+     ("C-c Y" . copilot-accept-completion)
+     ("C-c N" . copilot-next-completion)
+     ("C-c P" . copilot-previous-completion)
+     ))
 
 (use-package eglot
   :ensure t
   :init
-  (setq exec-path (cons "/home/hakan/git/erlang_ls/_build/default/bin" exec-path))
+  (setq exec-path (cons "~/git/erlang_ls/_build/default/bin" exec-path))
   ;;(setq exec-path (cons "/home/hakan/git/erlang_ls/dev" exec-path))
   :hook (erlang-mode . eglot-ensure)
   :bind
@@ -870,12 +745,42 @@ default lsp-passthrough."
    ("C-c C-p" . flymake-goto-prev-error)
    ("C-c C-n" . flymake-goto-next-error)
    ("C-c C-e" . consult-flymake)
+   ("C-c e" . eglot)
    )
   )
 
-(use-package eglot-booster
-  :after eglot
-  :config (eglot-booster-mode))
+(use-package vterm
+  :ensure t
+  :init
+  (setq vterm-buffer-name-string "*vterm* %s")
+  (setq vterm-max-scrollback 100000)
+  :bind
+  (("C-c t" . vterm-toggle)
+   ("C-c s" . hn/switch-to-vterm-buffer)
+   ))
+
+(defun hn/switch-to-vterm-buffer ()
+  "Switch to a buffer whose name matches '*vterm*'."
+  (interactive)
+  (let* ((vterm-buffers (seq-filter
+                         (lambda (buf)
+                           (string-match-p "^\\*vterm" (buffer-name buf)))
+                         (buffer-list)))
+         (buffer-names (mapcar 'buffer-name vterm-buffers))
+         (chosen-buffer (completing-read "Switch to vterm buffer: " buffer-names)))
+    (when (not (string= chosen-buffer ""))
+      (switch-to-buffer chosen-buffer))))
+
+;; (use-package tree-sitter-langs
+;;   :ensure t
+;;   :config
+;;   ;; This next line feels like a hack
+;;   (add-to-list 'tree-sitter-major-mode-language-alist '(c++-ts-mode . cpp))
+;;   :after tree-sitter
+;;   )
+;; (use-package eglot-booster
+;;   :after eglot
+;;   :config (eglot-booster-mode))
 
 (use-package multiple-cursors
   :ensure t
@@ -888,17 +793,6 @@ default lsp-passthrough."
    ("C-M->" . mc/mark-next-like-this-symbol)
    )
   )
-
-
-;;(add-hook 'erlang-mode-hook 'eglot-ensure)
-
-;; (use-package flycheck-eglot
-;;   :ensure t
-;;   :after (flycheck eglot)
-;;   :config
-;;   (global-flycheck-eglot-mode 1))
-
-
 
 ;; Which key
 (use-package which-key
@@ -921,33 +815,6 @@ default lsp-passthrough."
   :config
   )
 
-(add-to-list 'load-path "/home/hakan/.emacs.d/lisp")
-(use-package chatgpt-arcana
-;  :ensure t
-  :defer t
-  :init
-  (setq chatgpt-arcana-api-key "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")
-  )
-
-
-;; Company
-;; (use-package company
-;;   :ensure t
-;;   :config
-;;   (global-company-mode t)
-;;   (setq company-idle-delay 0.5)
-;;   :diminish ""
-;;   :bind
-;;   (([C-tab] . company-complete)
-;;    ([C-return] . company-complete)
-;;   ))
-
-;; (use-package company-box
-;;   :ensure t
-;;   :hook (company-mode . company-box-mode)
-;;   :diminish ""
-;;   )
-
 ;; Nyan mode
 (use-package nyan-mode
   :if window-system
@@ -959,6 +826,7 @@ default lsp-passthrough."
 
 (use-package edit-server
   :if window-system
+  :ensure t
   :init
   (add-hook 'after-init-hook 'edit-server-start t))
 
@@ -1049,7 +917,7 @@ default lsp-passthrough."
  '(main-line-separator-style 'chamfer)
  '(nyan-mode nil)
  '(package-selected-packages
-   '(eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+   '(eat 0blayout multi-vterm vterm-toggle vterm multi-term tree-sitter-langs dap-erlang project-treemacs gptel chatgpt corfu-terminal eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
  '(package-vc-selected-packages
    '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster")))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
@@ -1062,13 +930,14 @@ default lsp-passthrough."
  '(sml/show-file-name t)
  '(swiper-goto-start-of-match t)
  '(vc-follow-symlinks t)
- '(warning-suppress-types '((comp))))
+ '(warning-suppress-types '((comp)))
+ '(whitespace-style '(face trailing tabs lines-tail empty)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :extend nil :stipple nil :background "#242424" :foreground "#f6f3e8" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 200 :width normal :foundry "ADBO" :family "Source Code Pro"))))
+ '(default ((t (:inherit nil :extend nil :stipple nil :background "#242424" :foreground "#f6f3e8" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "ADBO" :family "Source Code Pro"))))
  '(company-preview ((t (:foreground "#a0a0a0"))))
  '(company-preview-common ((t (:inherit company-preview))))
  '(company-scrollbar-bg ((t (:background "#494949"))) t)
@@ -1110,6 +979,7 @@ default lsp-passthrough."
  '(swiper-background-match-face-2 ((t (:inherit swiper-match-face-2))))
  '(swiper-line-face ((t (:inherit nil :background "#454545"))))
  '(swiper-match-face-2 ((t (:inverse-video t))))
+ '(treemacs-hl-line-face ((t (:inherit hl-line :background "#494949"))))
  '(whitespace-line ((t (:background "gray9")))))
 
 (put 'downcase-region 'disabled nil)

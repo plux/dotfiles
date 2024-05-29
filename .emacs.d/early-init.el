@@ -20,9 +20,6 @@
 ;; Color theme
 (load-theme 'wombat)
 
-(setenv "LSP_USE_PLISTS" "true")
-
-
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
