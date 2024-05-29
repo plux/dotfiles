@@ -1,9 +1,4 @@
 ;;; init.el -- My emacs config
-;; Moved to early-init.el
-;; Adjust gc-cons-threshold. The default setting is too low.
-;; The default is 800 kilobytes.  Measured in bytes.
-;(setq gc-cons-threshold (* 100 1000 1000))
-;(setq comp-deferred-compilation t)
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "%s [duration: %s] [gcs: %d]"
@@ -14,34 +9,17 @@
                      gcs-done)
             (setq gc-cons-threshold (* 100 1000 1000))))
 
-;(require 'ccls)
-;; Profile emacs startup
-;; Stupid splash screen
-;(setq inhibit-startup-message t)
-
-;; Color theme
-;(load-theme 'wombat)
 ;; Columns are nice
 (column-number-mode 1)
 (global-hl-line-mode)
 
-;; Turn of menubar, toolbar and scrollbar
-;(menu-bar-mode 0)
-;(tool-bar-mode 0)
-;(scroll-bar-mode 0)
-
 (eval-when-compile
   (require 'use-package))
 
-;(require 'diminish)
-
-                                        ;(require 'bind-key)
 (add-to-list 'load-path "~/.emacs.d/lisp")
-
 
 (use-package emacs-everywhere)
 (require 'yang-mode nil t)
-
 
 (eval-when-compile
   (require 'lux-mode))
@@ -74,7 +52,8 @@
 (defun tailf-eunit ()
   "Run eunit test in tailf."
   (interactive ())
-  (compile (format "make -C ../test/eunit test-%s"
+  (compile (format "source %senv.sh; make -C ../test/eunit test-%s"
+                   (projectile-project-root)
                    (erlang-get-module))))
 
 
