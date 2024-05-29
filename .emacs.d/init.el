@@ -52,8 +52,11 @@
 (defun tailf-eunit ()
   "Run eunit test in tailf."
   (interactive ())
-  (compile (format "source %senv.sh; make -C ../test/eunit test-%s"
+  (compile (format "source %senv.sh; make %s test-%s"
                    (projectile-project-root)
+                   (if (s-ends-with? "/eunit/" (file-name-parent-directory (buffer-file-name)))
+                       ""
+                       "-C ../test/eunit")
                    (erlang-get-module))))
 
 
