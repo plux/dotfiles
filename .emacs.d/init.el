@@ -30,8 +30,10 @@
   ("C-c C-c" . lux-run-test)
   )
 
+
+
 (defun launch-terminal ()
-  "Launch a terminal."
+  "Launch a external terminal."
   (interactive ())
   (shell-command "gnome-terminal"))
 
@@ -59,6 +61,17 @@
                        "-C ../test/eunit")
                    (erlang-get-module))))
 
+;; (defun tailf-format ()
+;;   "Run `make erlfmt_format' in tailf."
+;;   (interactive ())
+;;   (when (eq major-mode 'erlang-mode)
+;;     (call-process-shell-command
+;;      (format "make -C %s erlfmt_format" (projectile-project-root))
+;;      nil "*erlfmt output*" t)))
+
+;; (add-hook 'after-save-hook 'tailf-format)
+
+
 
 (defun tailf-ct-suite ()
   "Run ct suite in tailf."
@@ -76,7 +89,6 @@
                        (erlang-get-function-name))))
   (deactivate-mark))
 
-
 (defun generate-compiledb ()
   "Generate compiledb"
   (interactive ())
@@ -86,36 +98,13 @@
 (setq c-basic-offset 2)
 (setq ring-bell-function 'ignore)
 
-(defun shift-region (distance)
-  (let ((mark (mark)))
-    (save-excursion
-      (indent-rigidly (region-beginning) (region-end) distance)
-      (push-mark mark t t)
-      ;; Tell the command loop not to deactivate the mark
-      ;; for transient mark mode
-      (setq deactivate-mark nil))))
-
-(defun shift-right ()
-  (interactive)
-  (shift-region 1))
-
-(defun shift-left ()
-  (interactive)
-  (shift-region -1))
-
-;; Bind (shift-right) and (shift-left) function to your favorite keys. I use
-;; the following so that Ctrl-Shift-Right Arrow moves selected text one
-;; column to the right, Ctrl-Shift-Left Arrow moves selected text one
-;; column to the left:
-
-(global-set-key [C-S-right] 'shift-right)
-(global-set-key [C-S-left] 'shift-left)
-
 ;; Packages
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                          ("melpa" . "http://melpa.org/packages/")
                          ("nongnu" . "https://elpa.nongnu.org/nongnu/")
                          ))
+
+
 
 (use-package corfu-terminal
 ;  :ensure t
@@ -240,7 +229,7 @@ default lsp-passthrough."
   :ensure t
   :hook (after-init . doom-modeline-mode)
   :custom
-  (doom-modeline-height 65)
+  (doom-modeline-height 35)
   (doom-modeline-bar-width 1)
   (doom-modeline-icon nil)
   (doom-modeline-major-mode-icon nil)
@@ -272,6 +261,7 @@ default lsp-passthrough."
 ;; Global emacs settings
 (use-package emacs
   :config
+  (setq confirm-kill-emacs 'y-or-n-p)
   (setq compilation-scroll-output t)
   ;; Use y/n instead of yes/no for questions
   (defalias 'yes-or-no-p 'y-or-n-p)
@@ -307,17 +297,18 @@ default lsp-passthrough."
     ("C-`"   . popper-toggle-latest)
     ("M-`"   . popper-cycle)
     ("C-M-`" . popper-toggle-type)
-    ("C-c RET" . launch-terminal)
+    ("C-c RET" . new-terminal)
     ))
 
-(defun run-projectile-invalidate-cache (&rest _args)
-  ;; We ignore the args to `magit-checkout'.
-  (projectile-invalidate-cache nil))
 
-(advice-add 'magit-checkout
-            :after #'run-projectile-invalidate-cache)
-(advice-add 'magit-branch-and-checkout ; This is `b c'.
-            :after #'run-projectile-invalidate-cache)
+;; (defun run-projectile-invalidate-cache (&rest _args)
+;;   ;; We ignore the args to `magit-checkout'.
+;;   (projectile-invalidate-cache nil))
+
+;; (advice-add 'magit-checkout
+;;             :after #'run-projectile-invalidate-cache)
+;; (advice-add 'magit-branch-and-checkout ; This is `b c'.
+;;             :after #'run-projectile-invalidate-cache)
 ;; Use hippie auto completion
 (use-package hippie-expand
   :init
@@ -337,6 +328,12 @@ default lsp-passthrough."
   :config
   (windmove-default-keybindings 'meta)
   )
+
+;; (use-package popwin
+;;   :ensure t
+;;   :config
+;;   (popwin-mode 1)
+;;   )
 
 (exec-path)
 
@@ -481,7 +478,7 @@ default lsp-passthrough."
          ;; ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
          ;; ("C-M-#" . consult-register)
          ;; Other custom bindings
-         ("M-y" . consult-yank-pop) ;; orig. yank-pop
+         ([remap yank-pop] . consult-yank-pop) ;; orig. yank-pop
          ;; ("<help> a" . consult-apropos)            ;; orig. apropos-command
          ;; M-g bindings (goto-map)
          ;; ("M-g e" . consult-compile-error)
@@ -631,7 +628,7 @@ default lsp-passthrough."
   :ensure t
   :init
 ;  (setq projectile-completion-system 'helm)
-  (setq projectile-enable-caching t)
+  (setq projectile-enable-caching nil)
   :bind-keymap
   ("C-c p" . projectile-command-map)
   :config
@@ -663,12 +660,68 @@ default lsp-passthrough."
   :init
   (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
 
+(use-package indent-bars
+  :ensure t
+  :config
+    (setq
+    indent-bars-color '(highlight :face-bg t :blend 0.25)
+    indent-bars-pattern "."
+    indent-bars-width-frac 0.1
+    indent-bars-pad-frac 0.1
+    indent-bars-zigzag nil
+    ;; indent-bars-color-by-depth nil
+    indent-bars-highlight-current-depth nil
+    ;; indent-bars-display-on-blank-lines nil
+    )
+  :hook ((yang-mode prog-mode) . indent-bars-mode))
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
+
+(use-package go-mode
+  :ensure t
+  :hook (before-save . gofmt-before-save)
+  :config
+  (setq tab-width 4)
+  :bind
+  (("C-c C-c" . go-build)
+   ("C-c C-r" . go-run)
+   ))
+
+(defun go-build ()
+  "Go build."
+  (interactive ())
+  (compile "go build ."))
+
+(defun go-run ()
+  "Go run."
+  (interactive ())
+  (compile "go run ."))
+
+;; (defun my-eglot-format ()
+;;   "Format the buffer with eglot if erlang-mode."
+;;   (when (eq major-mode 'erlang-mode)
+;;     (eglot-format-buffer))
+;;   )
+
+;; (defun tailf-format ()
+;;   "Format the buffer with eglot if erlang-mode.
+;;    Run the command make erlfmt_format in the root of the project.
+;;   "
+;;   (interactive ())
+;;   (when (eq major-mode 'erlang-mode)
+;;     (compile "make -C %s erlfmt_format"))
+;;   )
+
+;; (add-hook 'after-save-hook 'tailf-format)
+
 ;; Install the official Erlang mode
 (use-package erlang
   :ensure t
   :defer t
   :init
   (setq erlang-check-module-name nil)
+  :hook
+  (before-save . eglot-format-buffer)
   :mode (("\\.erl?$" . erlang-mode)
          ("rebar\\.config$" . erlang-mode)
          ("relx\\.config$" . erlang-mode)
@@ -683,7 +736,9 @@ default lsp-passthrough."
          ("\\.lux$" . lux-mode)
          )
   :bind
-  (("C-c C-f" . consult-ripgrep-erl)
+  (
+   :map erlang-mode-map
+   ("C-c C-f" . consult-ripgrep)
    ("C-c C-t C-t" . tailf-ct-case)
    ("C-c C-t C-c" . tailf-compile)
    ("C-c C-t C-s" . tailf-ct-suite)
@@ -706,6 +761,7 @@ default lsp-passthrough."
     (setq copilot-max-char 1000000)
     :hook ((prog-mode . copilot-mode)
            (lux-mode . copilot-mode)
+           (python-mode . copilot-mode)
            (yang-mode . copilot-mode))
     :bind
     (("C-c c" . copilot-complete)
@@ -715,12 +771,27 @@ default lsp-passthrough."
      ("C-c P" . copilot-previous-completion)
      ))
 
+
+(add-to-list 'load-path "~/git/copilot-chat.el")
+;; (use-package :request
+;;  :ensure t)
+
+(use-package copilot-chat
+    :after (request shell-maker)
+  :custom
+  (copilot-chat-frontend 'shell-maker)
+  :config
+  (require 'copilot-chat-shell-maker)
+  (push '(shell-maker . copilot-chat-shell-maker-init) copilot-chat-frontend-list)
+  (copilot-chat-shell-maker-init))
+
 (use-package eglot
   :ensure t
   :init
   (setq exec-path (cons "~/git/erlang_ls/_build/default/bin" exec-path))
   ;;(setq exec-path (cons "/home/hakan/git/erlang_ls/dev" exec-path))
-  :hook (erlang-mode . eglot-ensure)
+  :hook ((erlang-mode . eglot-ensure)
+         (go-mode . eglot-ensure))
   :bind
   (("C-o" . eglot-rename)
    ("M-o" . eglot-code-actions)
@@ -731,27 +802,122 @@ default lsp-passthrough."
    )
   )
 
+;; Open files in other window
+(setq server-window 'pop-to-buffer)
+
+
+(defun vterm-send-C-k ()
+  "Send `C-k' to libvterm."
+  (interactive)
+  (kill-ring-save (point) (vterm-end-of-line))
+  (vterm-send-key "k" nil nil t))
+
+(defun my-vterm-mode-customizations ()
+  (local-set-key (kbd "C-k") 'vterm-send-C-k))
+
+(add-hook 'vterm-mode-hook 'my-vterm-mode-customizations)
+
+(defun get-current-dir-i ()
+    (interactive)
+    (message "%s" (get-current-dir)))
+
+(defun extract-path (str)
+  (if (string-match "\\*vterm\\* \\([^<]*\\)" str)
+      (match-string 1 str)
+    nil))
+
+(defun get-current-dir ()
+  (if (buffer-file-name)
+      (file-name-directory (buffer-file-name))
+    (or (extract-path (buffer-name))
+        default-directory)))
+
+(defun new-terminal ()
+  (interactive)
+  ;; This will split the window if there's only one window
+  ;; Try to use current directory as default directory
+  (open-multi-vterm-in-other-window (get-current-dir)))
+
+
+(defun open-multi-vterm-in-other-window (dir)
+  "Open `multi-vterm' in the other window. Split window if necessary.
+If the current buffer name starts with `*vterm*`, split below."
+  (if (string-prefix-p "*vterm*" (buffer-name))
+      (progn
+        (split-window-below) ; Split the window horizontally if in a vterm buffer
+        (other-window 1))   ; Move to the window below
+    (if (one-window-p)
+        (split-window-right))     ; Split the window vertically if there's only one window
+    (other-window 1))       ; Move to the other window in any case
+  (let ((default-directory dir))
+        (multi-vterm)))
+
+(defun dedicate-window (&optional arg)
+  "Set current window to be dedicated.
+   With prefix ARG, undedicate it."
+  (interactive "P")
+  (set-window-dedicated-p (get-buffer-window (current-buffer)) (not arg))
+  (message (if arg
+               "Window '%s' is normal"
+               "Window '%s' is dedicated")
+           (current-buffer)))
+
 (use-package vterm
   :ensure t
   :init
   (setq vterm-buffer-name-string "*vterm* %s")
   (setq vterm-max-scrollback 100000)
+  ; (setq vterm-enable-manipulate-selection-data-by-osc52 t)
   :bind
   (("C-c t" . vterm-toggle)
-   ("C-c s" . hn/switch-to-vterm-buffer)
+   ("C-c v" . hn/switch-to-vterm-buffer)
+   :map vterm-mode-map
+   ("C-c C-t" . vterm-copy-mode)
+   ("M-y" . vterm-yank-pop)
+   ("C-k" . vterm-send-C-k)
+   ("C-c <left>" . multi-vterm-prev)
+   ("C-c n" . multi-vterm-prev)
+   ("C-c <right>" . multi-vterm-next)
    ))
 
-(defun hn/switch-to-vterm-buffer ()
-  "Switch to a buffer whose name matches '*vterm*'."
+
+;; (add-to-list 'vterm-eval-cmds '("update-pwd" (lambda (path) (setq default-directory path))))
+
+;; (defun vterm-directory-sync ()
+;;   "Synchronize current working directory."
+;;   (interactive)
+;;   (when vterm--process
+;;     (let* ((pid (process-id vterm--process))
+;;            (dir (file-truename (format "/proc/%d/cwd/" pid))))
+;;       (setq default-directory dir))))
+ 
+(defun vterm-send-C-k ()
+  "Send `C-k' to libvterm."
   (interactive)
-  (let* ((vterm-buffers (seq-filter
-                         (lambda (buf)
-                           (string-match-p "^\\*vterm" (buffer-name buf)))
-                         (buffer-list)))
-         (buffer-names (mapcar 'buffer-name vterm-buffers))
-         (chosen-buffer (completing-read "Switch to vterm buffer: " buffer-names)))
-    (when (not (string= chosen-buffer ""))
-      (switch-to-buffer chosen-buffer))))
+  (kill-ring-save (point) (vterm-end-of-line))
+  (vterm-send-key "k" nil nil t))
+
+(defun hn/switch-to-vterm-buffer ()
+  "Switch to a buffer whose name matches '*vterm'."
+  (interactive)
+  (if (and (boundp 'multi-vterm-buffer-list) multi-vterm-buffer-list)
+      (let* ((buffer-names (remove nil (mapcar 'buffer-name multi-vterm-buffer-list)))
+             (chosen-buffer (completing-read "Switch to vterm buffer: " buffer-names)))
+        (when (not (string= chosen-buffer ""))
+          (switch-to-buffer chosen-buffer)))
+    (new-terminal)))
+
+;; (defun hn/switch-to-vterm-buffer ()
+;;   "Switch to a buffer whose name matches '*vterm'."
+;;   (interactive)
+;;   (let* ((vterm-buffers (seq-filter
+;;                          (lambda (buf)
+;;                            (string-match-p "^\\*vterm" (buffer-name buf)))
+;;                          (buffer-list)))
+;;          (buffer-names (mapcar 'buffer-name vterm-buffers))
+;;          (chosen-buffer (completing-read "Switch to vterm buffer: " buffer-names)))
+;;     (when (not (string= chosen-buffer ""))
+;;       (switch-to-buffer chosen-buffer))))
 
 ;; (use-package tree-sitter-langs
 ;;   :ensure t
@@ -767,7 +933,7 @@ default lsp-passthrough."
 (use-package multiple-cursors
   :ensure t
   :bind
-  (("C-c C-l" . mc/edit-lines)
+  (("C-c l" . mc/edit-lines)
    ("C-c C-SPC" . mc/mark-all-dwim)
    ("C-<" . mc/mark-previous-like-this)
    ("C->" . mc/mark-next-like-this)
@@ -798,13 +964,13 @@ default lsp-passthrough."
   )
 
 ;; Nyan mode
-(use-package nyan-mode
-  :if window-system
-  :ensure t
-  :config
-  (nyan-mode)
-  (nyan-start-animation)
-  )
+;; (use-package nyan-mode
+;;   :if window-system
+;;   :ensure t
+;;   :config
+;;   (nyan-mode)
+;;   (nyan-start-animation)
+;;   )
 
 (use-package edit-server
   :if window-system
@@ -897,9 +1063,9 @@ default lsp-passthrough."
  '(main-line-color1 "#1E1E1E")
  '(main-line-color2 "#111111")
  '(main-line-separator-style 'chamfer)
- '(nyan-mode nil)
+ '(org-fold-core-style 'overlays)
  '(package-selected-packages
-   '(eat 0blayout multi-vterm vterm-toggle vterm multi-term tree-sitter-langs dap-erlang project-treemacs gptel chatgpt corfu-terminal eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode nyan-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+   '(org-drawio indent-bars 2bit 2048-game request eterm-256color link-hint popwin eat 0blayout multi-vterm vterm-toggle vterm multi-term tree-sitter-langs dap-erlang project-treemacs gptel chatgpt corfu-terminal eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
  '(package-vc-selected-packages
    '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster")))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
@@ -912,6 +1078,7 @@ default lsp-passthrough."
  '(sml/show-file-name t)
  '(swiper-goto-start-of-match t)
  '(vc-follow-symlinks t)
+ '(vterm-term-environment-variable "xterm-256color")
  '(warning-suppress-types '((comp)))
  '(whitespace-style '(face trailing tabs lines-tail empty)))
 (custom-set-faces
@@ -966,4 +1133,3 @@ default lsp-passthrough."
 
 (put 'downcase-region 'disabled nil)
 (put 'narrow-to-region 'disabled nil)
-
