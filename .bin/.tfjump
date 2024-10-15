@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 beginswith() {
     case $2 in
@@ -7,10 +7,19 @@ beginswith() {
     esac
 }
 
+select_path() {
+    local COLOR='\033[0;34m'
+    local NO_COLOR='\033[0m' # No Color
+    for dir in "${TAILF_SEARCH_PATH}"/*; do
+        branch=$(git -C "${dir}" branch --show-current 2>/dev/null)
+        name=$(basename ${dir})
+        echo "${name} ${COLOR}${branch}${NO_COLOR}"
+    done | fzf --layout=reverse --height=1% --ansi | awk '{print $1}'
+}
+
 main() {
     local CURR_VERSION=""
     local CURR_SUB_PATH=""
-    local FZF_CMD="fzf --layout=reverse --height=1%"
     for version in "${TAILF_SEARCH_PATH}"/*; do
         beginswith "${version}" "${PWD}";
         if [ $? = 0 ]; then
@@ -28,7 +37,7 @@ main() {
     if [ -e ${TAILF_SEARCH_PATH}/${1}/env.sh ]; then
         NEW_PATH="${TAILF_SEARCH_PATH}/${1}/${CURR_SUB_PATH}"
     else
-        NEW_PATH="${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf --layout=reverse --height=1%)/${CURR_SUB_PATH}"
+        NEW_PATH="${TAILF_SEARCH_PATH}/$(select_path)/${CURR_SUB_PATH}"
     fi;
     echo "jump to ${NEW_PATH}"
     cd "${NEW_PATH}" || return

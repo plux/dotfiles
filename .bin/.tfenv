@@ -1,6 +1,17 @@
 #!/bin/sh
+
+select_path() {
+    local COLOR='\033[0;34m'
+    local NO_COLOR='\033[0m' # No Color
+    for dir in "${TAILF_SEARCH_PATH}"/*; do
+        branch=$(git -C "${dir}" branch --show-current 2>/dev/null)
+        name=$(basename ${dir})
+        echo "${name} ${COLOR}${branch}${NO_COLOR}"
+    done | fzf --layout=reverse --height=1% --ansi | awk '{print $1}'
+}
+
 if [ -f ${TAILF_SEARCH_PATH}/${1}/env.sh ]; then
-   source ${TAILF_SEARCH_PATH}/${1}/env.sh
+    source ${TAILF_SEARCH_PATH}/${1}/env.sh
 else
-   source ${TAILF_SEARCH_PATH}/$(ls ${TAILF_SEARCH_PATH} | fzf --layout=reverse --height=1%)/env.sh
+    source ${TAILF_SEARCH_PATH}/$(select_path)/env.sh
 fi;
