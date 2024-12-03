@@ -11,12 +11,355 @@
 
 ;; Columns are nice
 (column-number-mode 1)
-(global-hl-line-mode)
+
+
+
+;; (add-to-list 'load-path "~/.emacs.d/site-lisp/emacs-application-framework/")
+;; (require 'eaf)
+;; (require 'eaf-pdf-viewer)
+;; (require 'eaf-system-monitor)
+;; (require 'eaf-browser)
+;; (require 'eaf-image-viewer)
+;; (require 'eaf-markdown-previewer)
+
+;; (use-package eaf
+;;   :load-path "~/.emacs.d/site-lisp/emacs-application-framework"
+;;   :custom
+;;   ; See https://github.com/emacs-eaf/emacs-application-framework/wiki/Customization
+;;   (eaf-browser-continue-where-left-off t)
+;;   (eaf-browser-enable-adblocker t)
+;;   (browse-url-browser-function 'eaf-open-browser)
+;;   :config
+;;   (defalias 'browse-web #'eaf-open-browser)
+;;   (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
+;;   (eaf-bind-key take_photo "p" eaf-camera-keybinding)
+;;   (eaf-bind-key nil "M-q" eaf-browser-keybinding))
+
+(use-package mwim
+  :ensure t
+  :bind
+  ("C-a" . mwim-beginning-of-code-or-line)
+  ("C-e" . mwim-end-of-code-or-line)
+)
+
+(use-package
+  diff-hl
+  :ensure t
+  :init
+  (global-diff-hl-mode)
+  )
 
 (eval-when-compile
   (require 'use-package))
 
 (add-to-list 'load-path "~/.emacs.d/lisp")
+
+(defun sort-words-in-region (start end)
+  "Sort words in the selected region alphabetically."
+  (interactive "r")
+  (save-excursion
+    (let ((words (split-string (buffer-substring-no-properties start end))))
+      (delete-region start end)
+      (insert (mapconcat 'identity (sort words 'string<) " ")))))
+
+;; Hacks for Templ, Tailwind, htmx 
+;; Stolen from https://drshapeless.com/blog/posts/writing-go-templ-with-emacs.html
+
+(defun drsl/is-class-attr ()
+  (let ((mynode (treesit-node-parent
+                 (treesit-node-parent
+                  (treesit-node-at (point))))))
+    (and (string= (treesit-node-type mynode) "attribute")
+         (string= (treesit-node-text (treesit-node-child mynode 0))
+                  "class"))))
+
+(defun drsl/bounds-of-keyword ()
+  (if (or (char-equal (char-before) ?\s)
+          (char-equal (char-before) ?\"))
+      nil
+    (let ((START (save-excursion
+                   (re-search-backward "[\s\"\t\n]"
+                                       (line-beginning-position)
+                                       t)))
+          (END (save-excursion
+                 (re-search-forward "[\s\"\t\n]"
+                                    (line-end-position)
+                                    t))))
+      (cons (if START
+                (1+ START)
+              (line-beginning-position))
+            (if END
+                (1- END)
+              (point))))))
+
+(defcustom drsl/tailwind-css-keyword-file
+  (expand-file-name "dict/tailwind_css_keyword.txt" user-emacs-directory)
+  "tailwindcss keyword file path."
+  :type 'string)
+
+(defun drsl/tailwind-css-dict-list (input)
+  "Return all words from `drsl/tailwind-css-keyword-file' matching INPUT."
+  (unless (equal input "")
+    (let* ((inhibit-message t)
+           (message-log-max nil)
+           (default-directory
+            (if (and (not (file-remote-p default-directory))
+                     (file-directory-p default-directory))
+                default-directory
+              user-emacs-directory))
+           (files (mapcar #'expand-file-name
+                          (ensure-list
+                           drsl/tailwind-css-keyword-file)))
+           (words
+            (apply #'process-lines-ignore-status
+                   "grep"
+                   (concat "-Fh"
+                           (and (cape--case-fold-p cape-dict-case-fold) "i")
+                           (and cape-dict-limit (format "m%d" cape-dict-limit)))
+                   input files)))
+      (cons
+       (apply-partially
+        (if (and cape-dict-limit (length= words cape-dict-limit))
+            #'equal #'string-search)
+        input)
+       (cape--case-replace-list cape-dict-case-replace input words)))))
+
+(defun drsl/templ-tailwind-cape-dict ()
+  (when (drsl/is-class-attr)
+    (pcase-let ((`(,beg . ,end) (drsl/bounds-of-keyword)))
+      `(,beg ,end
+             ,(cape--properties-table
+               (completion-table-case-fold
+                (cape--dynamic-table beg end #'drsl/tailwind-css-dict-list)
+                (not (cape--case-fold-p cape-dict-case-fold)))
+               :sort nil ;; Presorted word list (by frequency)
+               :category 'cape-dict)
+             ,@cape--dict-properties))))
+
+(defvar drsl/templ-ts-mode-tag-list
+  '("a" "abbr" "address" "area" "article" "aside" "audio" "b"
+    "base" "bdi" "bdo" "blockquote" "body" "br" "button" "canvas"
+    "caption" "cite" "code" "col" "colgroup" "data" "datalist"
+    "dd" "del" "details" "dfn" "dialog" "div" "dl" "dt" "em"
+    "embed" "fieldset" "figcaption" "figure" "footer" "form" "h1"
+    "h2" "h3" "h4" "h5" "h6" "head" "header" "hgroup" "hr" "html"
+    "i" "iframe" "img" "input" "ins" "kbd" "label" "legend" "li"
+    "link" "main" "map" "mark" "math" "menu" "meta" "meter" "nav"
+    "noscript" "object" "ol" "optgroup" "option" "output" "p"
+    "picture" "pre" "progress" "q" "rp" "rt" "ruby" "s" "samp"
+    "script" "search" "section" "select" "slot" "small" "source"
+    "span" "strong" "style" "sub" "summary" "sup" "svg" "table"
+    "tbody" "td" "template" "textarea" "tfoot" "th" "thead" "time"
+    "title" "tr" "track" "u" "ul" "var" "video" "wbr")
+  "HTML tags used for completion.
+
+Steal from `web-mode'.")
+
+(defvar drsl/templ-ts-mode-attribute-list
+  '("accept" "accesskey" "action" "alt" "async" "autocomplete" "autofocus"
+    "autoplay" "charset" "checked" "cite" "class" "cols" "colspan" "content"
+    "contenteditable" "controls" "coords" "data" "datetime" "default" "defer"
+    "dir" "dirname" "disabled" "download" "draggable" "enctype" "for" "form"
+    "formaction" "headers" "height" "hidden" "high" "href" "hreflang" "http"
+    "id" "ismap" "kind" "label" "lang" "list" "loop" "low" "max" "maxlength"
+    "media" "method" "min" "multiple" "muted" "name" "novalidate" "onabort"
+    "onafterprint" "onbeforeprint" "onbeforeunload" "onblur" "oncanplay"
+    "oncanplaythrough" "onchange" "onclick" "oncontextmenu" "oncopy"
+    "oncuechange" "oncut" "ondblclick" "ondrag" "ondragend" "ondragenter"
+    "ondragleave" "ondragover" "ondragstart" "ondrop" "ondurationchange"
+    "onemptied" "onended" "onerror" "onfocus" "onhashchange" "oninput"
+    "oninvalid" "onkeydown" "onkeypress" "onkeyup" "onload" "onloadeddata"
+    "onloadedmetadata" "onloadstart" "onmousedown" "onmousemove" "onmouseout"
+    "onmouseover" "onmouseup" "onmousewheel" "onoffline" "ononline"
+    "onpagehide" "onpageshow" "onpaste" "onpause" "onplay" "onplaying"
+    "onpopstate" "onprogress" "onratechange" "onreset" "onresize" "onscroll"
+    "onsearch" "onseeked" "onseeking" "onselect" "onstalled" "onstorage"
+    "onsubmit" "onsuspend" "ontimeupdate" "ontoggle" "onunload"
+    "onvolumechange" "onwaiting" "onwheel" "open" "optimum" "pattern"
+    "placeholder" "poster" "preload" "readonly" "rel" "required" "reversed"
+    "rows" "rowspan" "sandbox" "scope" "selected" "shape" "size" "sizes"
+    "span" "spellcheck" "src" "srcdoc" "srclang" "srcset" "start" "step"
+    "style" "tabindex" "target" "title" "translate" "type" "usemap" "value"
+    "width" "wrap")
+  "HTML attributes used for completion.
+
+Steal from `web-mode'.")
+
+(defun drsl/templ-ts-mode-completion ()
+  "templ-ts-mode completion function.
+
+The built-in treesit is required."
+  (cond (;; completing tag name, e.g. <d
+         (let ((bounds (or (bounds-of-thing-at-point 'word)
+                           (cons (point) (point)))))
+           (when (char-equal (char-before (car bounds)) ?\<)
+             (list (car bounds)
+                   (cdr bounds)
+                   drsl/templ-ts-mode-tag-list
+                   :annotation-function (lambda (_) " HTML Tag")
+                   :company-kind (lambda (_) 'text)
+                   :exclude 'no))))
+
+        (;; completing attribute name, e.g. <div c
+         (or (string= (treesit-node-type (treesit-node-at (point)))
+                      "attribute_name")
+             (string= (treesit-node-type (treesit-node-at (point)))
+                      ">"))
+         (let ((bounds (bounds-of-thing-at-point 'word)))
+           (when bounds
+             (list (car bounds)
+                   (cdr bounds)
+                   drsl/templ-ts-mode-attribute-list
+                   :annotation-function (lambda (_) " HTML Attr")
+                   :company-kind (lambda (_) 'text)
+                   :exclusive 'no))))
+        ))
+
+(defvar drsl/htmx-attribute-list
+  '("hx-get" "hx-post" "hx-on" "hx-push-url" "hx-select" "hx-select-oob"
+    "hx-swap" "hx-swap-oob" "hx-target" "hx-trigger" "hx-vals" "hx-boost"
+    "hx-confirm" "hx-delete" "hx-disable" "hx-disabled-elt" "hx-disinherit"
+    "hx-encoding" "hx-ext" "hx-headers" "hx-history" "hx-history-elt"
+    "hx-include" "hx-indicator" "hx-params" "hx-patch" "hx-preserve"
+    "hx-prompt" "hx-put" "hx-replace-url" "hx-request" "hx-sync" "hx-validate")
+
+  "Htmx attributes used for completion.")
+
+(defvar drsl/htmx-swap-keyword-list
+  '("innerHTML" "outerHTML" "beforebegin" "afterbegin" "beforeend"
+    "afterend" "delete" "none")
+  "Keywords for hx-swap.")
+
+(defvar drsl/htmx-target-keyword-list
+  '("this" "closest" "find" "next" "previous")
+  "Keywords for hx-target.")
+
+(defun drsl/get-htmx-value-list (ATTR)
+  "Return a list of htmx value.
+
+ATTR is the attribute name.
+Only support hx-swap, hx-swap-oob, hx-target."
+  (cond ((string-prefix-p "hx-swap" ATTR)
+         drsl/htmx-swap-keyword-list)
+        ((string= ATTR "hx-target")
+         drsl/htmx-target-keyword-list)))
+
+(defun drsl/templ-ts-mode-htmx-completion ()
+  "templ-ts-mode completion for htmx.
+
+Built-in treesit is required."
+  (cond (;; completion of htmx attr name, e.g. <div hx-swap
+         (or (string= (treesit-node-type (treesit-node-at (point)))
+                      "attribute_name")
+             (string= (treesit-node-type (treesit-node-at (point)))
+                      ">"))
+         ;; This mess if for the case when a - is typed.
+         ;;
+         ;; In the case of hx-swap*, where * is the pointer.
+         ;;
+         ;; Since word only includes swap, but symbol includes from
+         ;; hx-swap... to the infinity, so just select the first of
+         ;; symbol and last of word. But when a - is type, the
+         ;; bounds of word returns nil, so just set it to the
+         ;; `point'.
+         ;;
+         ;; TODO: This is an issue in the syntax table of
+         ;; `templ-ts-mode'.
+         ;;
+         (let ((bounds (drsl/bounds-of-keyword)))
+           (when bounds
+             (list (car bounds)
+                   (cdr bounds)
+                   drsl/htmx-attribute-list
+                   :annotation-function (lambda (_) " htmx attr")
+                   :company-kind (lambda (_) 'text)
+                   :exclusive 'no)))
+         )
+        (;; completion of some htmx value, e.g. <div hx-swap="innerHTML"
+         (string= (treesit-node-type (treesit-node-parent
+                                      (treesit-node-at (point))))
+                  "quoted_attribute_value")
+         (let ((words (drsl/get-htmx-value-list
+                       (treesit-node-text
+                        (treesit-node-prev-sibling
+                         (treesit-node-parent (treesit-node-at (point)))
+                         t)
+                        t)))
+               (bounds (or (bounds-of-thing-at-point 'word)
+                           (cons (point) (point)))))
+           (when words
+             (list (car bounds)
+                   (cdr bounds)
+                   words
+                   :annotation-function (lambda (_) " htmx value")
+                   :company-kind (lambda (_) 'text)
+                   :exclusive 'no)
+             ))
+         )))
+
+;; (defun drsl/templ-ts-mode-insert-slash ()
+;;   "Auto closing tag when inserting slash in `templ-ts-mode'"
+;;   (interactive)
+;;   (if (char-equal (char-before) ?\<)
+;;       (let ((TAG (or (treesit-node-text
+;;                       (treesit-node-child
+;;                        (drsl/treesit-prev-sibling-until
+;;                         (treesit-node-at (point))
+;;                         (lambda (NODE)
+;;                           (string= (treesit-node-type NODE)
+;;                                    "tag_start")))
+;;                        1)
+;;                       t)
+
+;;                      (when (drsl/treesit-next-sibling-until
+;;                             (treesit-node-parent (treesit-node-at (point)))
+;;                             (lambda (NODE)
+;;                               (string= (treesit-node-type NODE)
+;;                                        "tag_end")))
+;;                        (treesit-node-text
+;;                         (treesit-node-child
+;;                          (drsl/treesit-prev-sibling-until
+;;                           (treesit-node-parent (treesit-node-at (point)))
+;;                           (lambda (NODE)
+;;                             (string= (treesit-node-type NODE)
+;;                                      "tag_start")))
+;;                          1)
+;;                         t))
+;;                      )))
+;;         (if TAG
+;;             (progn (insert ?\/
+;;                            TAG
+;;                            ?\>)
+;;                    (treesit-indent))
+;;           (insert ?\/)))
+;;     (insert ?\/)))
+
+;; (keymap-unset templ-ts-mode-map "/" #'drsl/templ-ts-mode-insert-slash)
+
+(add-hook 'templ-ts-mode-hook
+          (lambda ()
+            (progn
+              (add-to-list 'drsl/eglot-extra-completion-functions
+                           #'drsl/templ-tailwind-cape-dict)
+              (add-to-list 'drsl/eglot-extra-completion-functions
+                           #'drsl/templ-ts-mode-completion)
+              (add-to-list 'drsl/eglot-extra-completion-functions
+                           #'drsl/templ-ts-mode-htmx-completion))))
+
+(defcustom drsl/eglot-extra-completion-functions '(cape-file)
+  "extra completion functions for eglot"
+  :type '(repeat string))
+
+(defun drsl/eglot-capf ()
+  (mapc
+   (lambda (FUNCTION)
+     (add-to-list 'completion-at-point-functions
+                  FUNCTION))
+   drsl/eglot-extra-completion-functions))
+
+(add-hook 'eglot-managed-mode-hook #'drsl/eglot-capf)
+
 
 (use-package emacs-everywhere)
 (require 'yang-mode nil t)
@@ -30,6 +373,112 @@
   ("C-c C-c" . lux-run-test)
   )
 
+(use-package magit
+  :ensure t
+  :init
+    (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
+    (setq magit-bury-buffer-function 'magit-restore-window-configuration)
+    )
+
+(use-package docker
+  :ensure t
+  :bind ("C-c d" . docker))
+
+;; dired stuff
+(setq ls-lisp-use-insert-directory-program nil)
+(setq ls-lisp-verbosity nil)
+(setq dired-listing-switches "-alFh")
+
+
+
+(add-to-list 'load-path "~/git/emacs-run-command-recipes")
+(require 'run-command-recipes)
+(use-package run-command-recipes
+  :ensure nil
+  :after (run-command)
+  :init (run-command-recipes-use-all))
+
+(use-package run-command
+  :ensure t
+  :init
+;;  (setq run-command-default-runner 'run-command-runner-compile)
+  :bind
+  ("C-x C-x" . run-command))
+
+
+(setq display-buffer-alist
+      '(("\\*projterm.*"
+         (display-buffer-reuse-mode-window display-buffer-at-bottom)
+         (window-height . 0.3)
+         (dedicated . t)
+         )))
+
+;; (defun toggle-my-projectile-vterm ()
+;;   "Toggle vterm in the project's root."
+;;   (interactive)
+;;   ()
+;;   (if (s-starts-with? "*projterm" (buffer-name))
+;;       (close-my-projectile-vterm-window))
+;;     (open-my-projectile-vterm nil 't))
+
+
+(defun toggle-my-projectile-vterm ()
+  "Toggle vterm in the project's root."
+  (interactive)
+  ()
+  (let* ((project (projectile-acquire-root))
+         (buffer (projectile-generate-process-name "projterm" nil project)))
+    (if (get-buffer-window buffer)
+        (delete-window (get-buffer-window buffer))
+      (open-my-projectile-vterm nil 't))))
+
+(defun close-my-projectile-vterm-window ()
+  "Close vterm in the project's root."
+  (interactive)
+  (let* ((project (projectile-acquire-root))
+         (buffer (projectile-generate-process-name "projterm" nil project)))
+    (delete-window (get-buffer-window buffer))))
+
+(global-set-key (kbd "C-q") 'toggle-my-projectile-vterm)
+(global-set-key (kbd "C-c q") 'toggle-my-projectile-vterm)
+
+(defun open-my-projectile-vterm (&optional new-process other-window)
+  "Invoke `vterm' in the project's root.
+
+Use argument NEW-PROCESS to indicate creation of a new process instead.
+Use argument OTHER-WINDOW to indentation whether the buffer should
+be displayed in a different window.
+
+Switch to the project specific term buffer if it already exists."
+  (interactive "P")
+    (let* ((project (projectile-acquire-root))
+         (buffer (projectile-generate-process-name "projterm" new-process project)))
+    (unless (require 'vterm nil 'noerror)
+      (error "Package 'vterm' is not available"))
+    (if (buffer-live-p (get-buffer buffer))
+        (if other-window
+            (switch-to-buffer-other-window buffer)
+          (switch-to-buffer buffer))
+      (projectile-with-default-dir project
+        (if other-window
+            (vterm-other-window buffer)
+          (vterm buffer))))))
+
+;; (setq display-buffer-alist
+;;       '(
+;;         ("\\*vterm"
+;;          (display-buffer-reuse-mode-window display-buffer-at-bottom)
+;;          (dedicated . t)
+;;          )))
+
+;;                                         ;(setq switch-to-buffer-obey-display-actions t)
+
+;; (setq switch-to-buffer-in-dedicated-window 'pop)
+
+(use-package dired-subtree
+        :ensure t
+        :bind (:map dired-mode-map
+                    ("<tab>" . dired-subtree-toggle)))
 
 
 (defun launch-terminal ()
@@ -293,7 +742,6 @@ default lsp-passthrough."
     ("C-s"    . swiper)
     ("C-c s"  . swiper-thing-at-point)
     ([f5]     . revert-buffer)
-    ("C-x C-z" . selectrum-repeat)
     ("C-`"   . popper-toggle-latest)
     ("M-`"   . popper-cycle)
     ("C-M-`" . popper-toggle-type)
@@ -470,7 +918,7 @@ default lsp-passthrough."
          ;; ("C-c k" . consult-kmacro)
          ;; C-x bindings (ctl-x-map)
          ;; ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-         ;; ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
          ;; ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
          ;; ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
          ;; Custom M-# bindings for fast register access
@@ -677,14 +1125,24 @@ default lsp-passthrough."
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
 
-(use-package go-mode
+
+(setq whitespace-style '(face empty tabs lines-tail trailing))
+
+(use-package go-ts-mode
   :ensure t
-  :hook (before-save . gofmt-before-save)
+  :hook ((go-ts-mode . my-go-whitespace-style)
+         (go-mode . my-go-whitespace-style)
+         (before-save . gofmt-before-save))
   :config
-  (setq tab-width 4)
+  (setq go-ts-mode-indent-offset 2)
+  (setq tab-width 2)
+  (defun my-go-whitespace-style ()
+    "Custom whitespace style for Go mode."
+    (setq whitespace-style '(face empty lines-tail trailing)))
   :bind
   (("C-c C-c" . go-build)
    ("C-c C-r" . go-run)
+   ("C-c C-t" . go-test)
    ))
 
 (defun go-build ()
@@ -696,6 +1154,11 @@ default lsp-passthrough."
   "Go run."
   (interactive ())
   (compile "go run ."))
+
+(defun go-test ()
+  "Go test."
+  (interactive ())
+  (compile "go test"))
 
 ;; (defun my-eglot-format ()
 ;;   "Format the buffer with eglot if erlang-mode."
@@ -772,26 +1235,66 @@ default lsp-passthrough."
      ))
 
 
-(add-to-list 'load-path "~/git/copilot-chat.el")
-;; (use-package :request
-;;  :ensure t)
+;;(add-to-list 'load-path "~/git/copilot-chat.el")
+(use-package :request
+ :ensure t)
 
 (use-package copilot-chat
-    :after (request shell-maker)
-  :custom
-  (copilot-chat-frontend 'shell-maker)
-  :config
-  (require 'copilot-chat-shell-maker)
-  (push '(shell-maker . copilot-chat-shell-maker-init) copilot-chat-frontend-list)
-  (copilot-chat-shell-maker-init))
+  :ensure t
+   :after (request shell-maker)
+   :custom
+   (copilot-chat-frontend 'shell-maker)
+   :config
+   (require 'copilot-chat-shell-maker)
+   (push '(shell-maker . copilot-chat-shell-maker-init) copilot-chat-frontend-list)
+   (copilot-chat-shell-maker-init))
+
+(use-package lsp-tailwindcss
+  :ensure t
+  :hook ((css-mode . lsp-tailwindcss-enable)
+         (web-mode . lsp-tailwindcss-enable)
+         (mhtml-mode . lsp-tailwindcss-enable))
+  :after lsp-mode
+  (setq lsp-tailwindcss-add-on-mode t)
+  )
 
 (use-package eglot
   :ensure t
   :init
+  (setq-default eglot-workspace-configuration
+                '((:gopls .
+                          ((hints . ((parameterNames . t)
+                                     ;;                                     (assignVariableTypes . t)
+                                     (constantValues . t)
+                                     ))
+                           (staticcheck . t)
+                           (usePlaceholders . t)
+                           (completeFunctionCalls . t)
+                           (diagnosticsTrigger . "Save")
+;;                           (buildFlags . ["-tags e2e"])
+                           (analyses . ((fieldalignment . t)
+                                        (fillreturns . t)))
+                           ;; (codelenses . ((generate . t)
+                           ;;                (test . t)
+                           ;;                ))
+                           ))
+                  ))
+  ;; (setq-default eglot-workspace-configuration
+  ;;               (quote (:gopls (:hints ((:parameterNames .t)))
+;;  :assignVariableTypes
+  ;;                        (:diagnosticsTrigger "Save")
+  ;;                        (:usePlaceholders t)
+  ;;                        ;;                               (buildFlags . ["-tags e2e"])
+  ;;                        (:staticcheck t)
+  ;;                        )))
+  ;;(setenv "GOBUILD" "-tags e2e")
   (setq exec-path (cons "~/git/erlang_ls/_build/default/bin" exec-path))
   ;;(setq exec-path (cons "/home/hakan/git/erlang_ls/dev" exec-path))
   :hook ((erlang-mode . eglot-ensure)
-         (go-mode . eglot-ensure))
+         (go-mode . eglot-ensure)
+         (go-ts-mode . eglot-ensure)
+         (templ-ts-mode . eglot-ensure)
+         (web-mode . eglot-ensure))
   :bind
   (("C-o" . eglot-rename)
    ("M-o" . eglot-code-actions)
@@ -804,7 +1307,6 @@ default lsp-passthrough."
 
 ;; Open files in other window
 (setq server-window 'pop-to-buffer)
-
 
 (defun vterm-send-C-k ()
   "Send `C-k' to libvterm."
@@ -865,13 +1367,14 @@ If the current buffer name starts with `*vterm*`, split below."
 (use-package vterm
   :ensure t
   :init
-  (setq vterm-buffer-name-string "*vterm* %s")
+  ;;(setq vterm-buffer-name-string "*vterm* %s")
   (setq vterm-max-scrollback 100000)
   ; (setq vterm-enable-manipulate-selection-data-by-osc52 t)
   :bind
   (("C-c t" . vterm-toggle)
    ("C-c v" . hn/switch-to-vterm-buffer)
    :map vterm-mode-map
+   ("C-q" . 'toggle-my-projectile-vterm)
    ("C-c C-t" . vterm-copy-mode)
    ("M-y" . vterm-yank-pop)
    ("C-k" . vterm-send-C-k)
@@ -880,55 +1383,27 @@ If the current buffer name starts with `*vterm*`, split below."
    ("C-c <right>" . multi-vterm-next)
    ))
 
-
-;; (add-to-list 'vterm-eval-cmds '("update-pwd" (lambda (path) (setq default-directory path))))
-
-;; (defun vterm-directory-sync ()
-;;   "Synchronize current working directory."
-;;   (interactive)
-;;   (when vterm--process
-;;     (let* ((pid (process-id vterm--process))
-;;            (dir (file-truename (format "/proc/%d/cwd/" pid))))
-;;       (setq default-directory dir))))
- 
 (defun vterm-send-C-k ()
   "Send `C-k' to libvterm."
   (interactive)
   (kill-ring-save (point) (vterm-end-of-line))
   (vterm-send-key "k" nil nil t))
 
+(require 'consult)
 (defun hn/switch-to-vterm-buffer ()
   "Switch to a buffer whose name matches '*vterm'."
   (interactive)
   (if (and (boundp 'multi-vterm-buffer-list) multi-vterm-buffer-list)
       (let* ((buffer-names (remove nil (mapcar 'buffer-name multi-vterm-buffer-list)))
-             (chosen-buffer (completing-read "Switch to vterm buffer: " buffer-names)))
+             (chosen-buffer (consult--read buffer-names
+                       :prompt "Switch to vterm buffer: "
+                       :sort t
+                       :require-match t
+                       :state (consult--buffer-preview)
+                       :history 'buffer-name-history)))
         (when (not (string= chosen-buffer ""))
           (switch-to-buffer chosen-buffer)))
     (new-terminal)))
-
-;; (defun hn/switch-to-vterm-buffer ()
-;;   "Switch to a buffer whose name matches '*vterm'."
-;;   (interactive)
-;;   (let* ((vterm-buffers (seq-filter
-;;                          (lambda (buf)
-;;                            (string-match-p "^\\*vterm" (buffer-name buf)))
-;;                          (buffer-list)))
-;;          (buffer-names (mapcar 'buffer-name vterm-buffers))
-;;          (chosen-buffer (completing-read "Switch to vterm buffer: " buffer-names)))
-;;     (when (not (string= chosen-buffer ""))
-;;       (switch-to-buffer chosen-buffer))))
-
-;; (use-package tree-sitter-langs
-;;   :ensure t
-;;   :config
-;;   ;; This next line feels like a hack
-;;   (add-to-list 'tree-sitter-major-mode-language-alist '(c++-ts-mode . cpp))
-;;   :after tree-sitter
-;;   )
-;; (use-package eglot-booster
-;;   :after eglot
-;;   :config (eglot-booster-mode))
 
 (use-package multiple-cursors
   :ensure t
@@ -956,6 +1431,66 @@ If the current buffer name starts with `*vterm*`, split below."
 ;; some of the language server responses are in 800k - 3M range.
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
+;; (defun generate-shortcuts (strings)
+;;   "Generate a list of unique shortcuts from STRINGS."
+;;   (let ((shortcuts (make-hash-table :test 'equal)))
+;;     (dolist (str strings)
+;;       (let ((found nil)
+;;             (i 0))
+;;         (while (and (< i (length str)) (not found))
+;;           (let ((char (substring str i (1+ i))))
+;;             (if (not (gethash char shortcuts))
+;;                 (progn
+;;                   (puthash char str shortcuts)
+;;                   (setq found t))
+;;               (when (and (= i 0) (not (gethash (upcase char) shortcuts)))
+;;                 (puthash (upcase char) str shortcuts)
+;;                 (setq found t))))
+;;           (setq i (1+ i)))
+;;         (unless found
+;;           (let ((j 0))
+;;             (while (and (< j (length str)) (not found))
+;;               (let ((char (substring str j (1+ j))))
+;;                 (if (not (gethash char shortcuts))
+;;                     (progn
+;;                       (puthash char str shortcuts)
+;;                       (setq found t))
+;;                   (when (not (gethash (upcase char) shortcuts))
+;;                     (puthash (upcase char) str shortcuts)
+;;                     (setq found t))))
+;;               (setq j (1+ j))))
+;;           (unless found
+;;             (error "Cannot find unique shortcut for string: %s" str)))))
+;;     (let ((result '()))
+;;       (maphash (lambda (k v) (push (cons k v) result)) shortcuts)
+;;       result)))
+
+;; (defun create-transient-from-strings (name strings)
+;;   "Create a transient with NAME from a list of STRINGS."
+;;   (let ((shortcuts (generate-shortcuts strings))
+;;         (transient-body '()))
+;;     (dolist (pair shortcuts)
+;;       (let ((shortcut (car pair))
+;;             (string (cdr pair)))
+;;         (push (list shortcut string (intern (concat "my-command-" string))) transient-body)
+;;         (eval `(defun ,(intern (concat "my-command-" string)) ()
+;;                  ,(format "Command for %s" string)
+;;                  (interactive)
+;;                  (message "%s executed" ,string)))))
+;;     (eval
+;;      `(transient-define-prefix ,(intern (concat "my-transient-" name)) ()
+;;         ,(format "Transient for %s" name)
+;;         ["Commands"
+;;          ,@transient-body]))))
+
+;; ;; Example usage
+;; (defun open-my-transient-makefile ()
+;;   (interactive)
+;;   (let ((my-make-commands (run-command-recipes-make--commands (run-command-recipes-make--project-makefile))))
+;;     (create-transient-from-strings "makefile" my-make-commands)
+;;     (my-transient-makefile))
+;;   )
+
 ;; Yasnippet
 (use-package yasnippet
   :ensure t
@@ -969,7 +1504,7 @@ If the current buffer name starts with `*vterm*`, split below."
 ;;   :ensure t
 ;;   :config
 ;;   (nyan-mode)
-;;   (nyan-start-animation)
+;;   ;; (nyan-start-animation)
 ;;   )
 
 (use-package edit-server
@@ -1043,7 +1578,7 @@ If the current buffer name starts with `*vterm*`, split below."
    [default default default italic underline success warning error])
  '(custom-safe-themes
    '("4eb6fa2ee436e943b168a0cd8eab11afc0752aebb5d974bba2b2ddc8910fca8f" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "b0334e8e314ea69f745eabbb5c1817a173f5e9715493d63b592a8dc9c19a4de6" "bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "eb122e1df607ee9364c2dfb118ae4715a49f1a9e070b9d2eb033f1cefd50a908" "78c4238956c3000f977300c8a079a3a8a8d4d9fee2e68bad91123b58a4aa8588" "d14f3df28603e9517eb8fb7518b662d653b25b26e83bd8e129acea042b774298" "83e0376b5df8d6a3fbdfffb9fb0e8cf41a11799d9471293a810deb7586c131e6" "6b5c518d1c250a8ce17463b7e435e9e20faa84f3f7defba8b579d4f5925f60c1" "7661b762556018a44a29477b84757994d8386d6edee909409fabe0631952dad9" "1c596673c1d111e95a404bd12f8dd446cbcd47eee885271e21ffc98c3ac386cb" "3e038e9133010baa92e17a2c57f87336e91e6e76139d8c38d7d55d3c59a15967" "682a1161ee456e2d715ba30be61697fdbce8c08e23c2c6a1943f155e3e52f701" "147a0b0fce798587628774ae804a18a73f121e7e5c5fdf3a874ba584fdbe131d" "4e96c6ca1ab443d9804bcb55104848b25bdfda5ae665adeb218db1af07e7979a" "e503f6b2f45ecc5c5e295d1b3d84bb484206c4badbf716847a2445facf9f7495" "fe2a620695413fe5dcd74e03f0383e577effd7bb59527aa4d86444108d861504" "2f57ee6507f30d3228cdddadd0150e7b2fd85dd7c818c2d6485888c7249c37e8" default))
- '(erlang-check-module-name nil)
+ '(erlang-check-module-name nil t)
  '(fci-rule-character-color "#202020")
  '(fci-rule-color "#151515")
  '(flycheck-check-syntax-automatically '(save))
@@ -1065,7 +1600,7 @@ If the current buffer name starts with `*vterm*`, split below."
  '(main-line-separator-style 'chamfer)
  '(org-fold-core-style 'overlays)
  '(package-selected-packages
-   '(org-drawio indent-bars 2bit 2048-game request eterm-256color link-hint popwin eat 0blayout multi-vterm vterm-toggle vterm multi-term tree-sitter-langs dap-erlang project-treemacs gptel chatgpt corfu-terminal eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
+   '(flycheck-golangci-lint gore-mode shell-maker :request copilot-chat swagg toml-mode protobuf-ts-mode markdown-ts-mode templ-ts-mode web-mode lsp-tailwindcss mwim tablist docker docker-compose-mode diff-hl run-command-recipes run-command dired-icon dired-preview dired-subtree verb restclient-jq restclient ivy lua-mode org-drawio indent-bars 2bit 2048-game request eterm-256color link-hint popwin eat 0blayout multi-vterm vterm-toggle vterm multi-term tree-sitter-langs dap-erlang project-treemacs gptel chatgpt corfu-terminal eglot-booster eldoc-box consult-eglot flycheck-eglot dumb-jump-mode flymake-shellcheck magit transient consult-flycheck ctrlf cargo cargo-transient rg jinx list-packages-ext default-text-scale hippie-expand all-the-icons swiper 0xc 0x0 doom-modeline marginalia emacs-everywhere esup company-prescient prescient selectrum vertico cape kind-icon all-the-icons-completion org org-modern highlight-indent-guides corfu corfu-doc command-log-mode org-tree-slide git-gutter zig-mode ccls company-erlang outline-magic origami fold-dwim fold-this dired-sidebar wgrep-ag wgrep lux-mode direnv org-static-blog minions smart-mode-line powerline flycheck-color-mode-line popper mini-frame consult embark embark-consult orderless dap-mode rainbow-delimiters rust-mode diminish helm-xref eglot outline-toc company-box helm-swoop flycheck-pos-tip emojify flycheck-yang yang-mode dash soothe-theme spacemacs-theme color-theme-sanityinc-tomorrow flatland-theme gruvbox-theme swiper-helm edts py-autopep8 blacken protobuf-mode company-jedi flycheck erlang slime projectile-ripgrep ripgrep iedit deft undo-tree know-your-http-well deadgrep helm-rg dumb-jump pdf-tools string-inflection use-package lsp-mode ensime csv helm-projectile helm-ls-git helm-fuzzy-find ace-jump-buffer ace-jump-helm-line ac-helm helm-ag helm-git helm-themes helm-lobsters helm-pass apib-mode ht dash-functional org-journal yaml-mode multiple-cursors markdown-preview-mode haskell-mode go-mode forecast flymd flycheck-rust eproject elpy elm-mode editorconfig edit-server dockerfile-mode cider autotetris-mode ansible ag ace-jump-mode winner whitespace helm projectile lsp-ui which-key yasnippet helm-lsp benchmark-init exec-path-from-shell))
  '(package-vc-selected-packages
    '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster")))
  '(pdf-view-midnight-colors '("#fdf4c1" . "#282828"))
@@ -1086,7 +1621,7 @@ If the current buffer name starts with `*vterm*`, split below."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :extend nil :stipple nil :background "#242424" :foreground "#f6f3e8" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "ADBO" :family "Source Code Pro"))))
+ '(default ((t (:inherit nil :extend nil :stipple nil :background "#242424" :foreground "#f6f3e8" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 200 :width normal :foundry "ADBO" :family "Source Code Pro"))))
  '(company-preview ((t (:foreground "#a0a0a0"))))
  '(company-preview-common ((t (:inherit company-preview))))
  '(company-scrollbar-bg ((t (:background "#494949"))) t)
@@ -1126,7 +1661,7 @@ If the current buffer name starts with `*vterm*`, split below."
  '(match ((t (:background "brown" :foreground "khaki"))))
  '(my-kind-icon ((t (:background "#191a1b" :height 0.5))))
  '(swiper-background-match-face-2 ((t (:inherit swiper-match-face-2))))
- '(swiper-line-face ((t (:inherit nil :background "#454545"))))
+ '(swiper-line-face ((t (:inherit nil :background "#454 545"))))
  '(swiper-match-face-2 ((t (:inverse-video t))))
  '(treemacs-hl-line-face ((t (:inherit hl-line :background "#494949"))))
  '(whitespace-line ((t (:background "gray9")))))
