@@ -1,7 +1,7 @@
 [include]
     path = ~/cisco/git-bootstrap/.gitconfig
-[core]
-    excludesfile = ~/cisco/git-bootstrap/.gitignore_global
+#[core]
+#    excludesfile = ~/cisco/git-bootstrap/.gitignore_global
 
 [user]
         name = Hakan Nilsson

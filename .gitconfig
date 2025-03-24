@@ -51,6 +51,10 @@
 
 [includeIf "gitdir:~/git/"]
 	path = ~/.gitconfig_plux
+
+[url "ssh://git@github5.cisco.com/"]
+    insteadOf = https://github5.cisco.com/
+    
 [pull]
 	rebase = merges
 [credential "https://github.com"]
@@ -62,3 +66,11 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+[user]
+	email = hanilsso@cisco.com
+	name = Hakan Nilsson
+	signingkey = /home/hanilsso/.ssh/id_ed25519.pub
+[help]
+	autocorrect = prompt
+[gpg]
+	format = ssh

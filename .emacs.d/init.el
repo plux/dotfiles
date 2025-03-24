@@ -12,36 +12,49 @@
 ;; Columns are nice
 (column-number-mode 1)
 
+(add-to-list 'load-path "~/.emacs.d/lisp")
+(add-to-list 'load-path "~/.emacs.d/lisp/ultra-scroll")
+(add-to-list 'load-path "~/.emacs.d/lisp/pgmacs")
+
+(xterm-mouse-mode 1)
+
+(require 'pgmacs)
+
+(use-package ultra-scroll
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0) 
+  :config
+  (ultra-scroll-mode 1))
+
+;; (use-package flycheck-overlay
+;;   :init
+;;   (setq flycheck-overlay-info-icon "i")
+;;   (setq flycheck-overlay-warning-icon "⚠")
+;;   (setq flycheck-overlay-error-icon "✘")
+;;   :hook (flycheck-mode . flycheck-overlay-mode)
+;; ;;  (add-hook 'flycheck-mode-hook #'flycheck-overlay-mode)
+;;   )
+
+(use-package kubed
+  :ensure t
+  :init
+  (keymap-global-set "C-c k" 'kubed-prefix-map)
+  )
 
 
-;; (add-to-list 'load-path "~/.emacs.d/site-lisp/emacs-application-framework/")
-;; (require 'eaf)
-;; (require 'eaf-pdf-viewer)
-;; (require 'eaf-system-monitor)
-;; (require 'eaf-browser)
-;; (require 'eaf-image-viewer)
-;; (require 'eaf-markdown-previewer)
 
-;; (use-package eaf
-;;   :load-path "~/.emacs.d/site-lisp/emacs-application-framework"
-;;   :custom
-;;   ; See https://github.com/emacs-eaf/emacs-application-framework/wiki/Customization
-;;   (eaf-browser-continue-where-left-off t)
-;;   (eaf-browser-enable-adblocker t)
-;;   (browse-url-browser-function 'eaf-open-browser)
-;;   :config
-;;   (defalias 'browse-web #'eaf-open-browser)
-;;   (eaf-bind-key scroll_up "C-n" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key scroll_down "C-p" eaf-pdf-viewer-keybinding)
-;;   (eaf-bind-key take_photo "p" eaf-camera-keybinding)
-;;   (eaf-bind-key nil "M-q" eaf-browser-keybinding))
-
+;; Make compilation buffer handle ansi colors
+(require 'ansi-color)
+(add-hook 'compilation-filter-hook 'ansi-color-compilation-filter)
 (use-package mwim
   :ensure t
   :bind
   ("C-a" . mwim-beginning-of-code-or-line)
   ("C-e" . mwim-end-of-code-or-line)
-)
+  )
+
+
 
 (use-package
   diff-hl
@@ -52,8 +65,6 @@
 
 (eval-when-compile
   (require 'use-package))
-
-(add-to-list 'load-path "~/.emacs.d/lisp")
 
 (defun sort-words-in-region (start end)
   "Sort words in the selected region alphabetically."
@@ -439,7 +450,7 @@ Built-in treesit is required."
          (buffer (projectile-generate-process-name "projterm" nil project)))
     (delete-window (get-buffer-window buffer))))
 
-(global-set-key (kbd "C-q") 'toggle-my-projectile-vterm)
+;; (global-set-key (kbd "C-q") 'toggle-my-projectile-vterm)
 (global-set-key (kbd "C-c q") 'toggle-my-projectile-vterm)
 
 (defun open-my-projectile-vterm (&optional new-process other-window)
@@ -704,6 +715,15 @@ default lsp-passthrough."
   ;; To disable collection of benchmark data after init is done.
   (add-hook 'after-init-hook 'benchmark-init/deactivate))
 
+(use-package expand-region
+  :bind ("C-=" . er/expand-region))
+
+(defun only-if-use-region (func &rest args)
+  (if (use-region-p)
+      (apply func args)))
+
+(advice-add 'electric-pair-post-self-insert-function :around 'only-if-use-region)
+
 ;; Start emacs server
 (load "server")
 (unless (server-running-p) (server-start))
@@ -831,6 +851,8 @@ default lsp-passthrough."
   ( ("C-c C-p" . flycheck-previous-error)
     ("C-c C-n" . flycheck-next-error)
     ("C-c C-e" . flycheck-first-error)
+    ("M-p" . flycheck-previous-error)
+    ("M-n" . flycheck-next-error)
     )
   )
 
@@ -858,6 +880,13 @@ default lsp-passthrough."
   :bind
   (("C-j" . 'ace-jump-word-mode)
    ("M-j" . 'ace-jump-line-mode))
+  )
+
+(use-package avy
+  :ensure t
+  :bind
+  (("C-j" . 'avy-goto-char)
+   ("M-j" . 'avy-goto-char-timer))
   )
 
 ;; Use whitespace mode to show whitespace
@@ -1020,6 +1049,13 @@ default lsp-passthrough."
   )
 
 
+(use-package jq-mode
+  :ensure t
+  )
+(use-package restclient
+  :ensure t
+  )
+
 (use-package vertico
   :ensure t
   :init
@@ -1031,12 +1067,13 @@ default lsp-passthrough."
   ;; Show more candidates
   (setq vertico-count 20)
 
-  ;; Grow and shrink the Vertico minibuffer
-  (setq vertico-resize t)
+  ;; Don't grow and shrink the Vertico minibuffer
+  (setq vertico-resize 'fixed)
 
   ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
   (setq vertico-cycle t)
   )
+
 
 (use-package embark
   :ensure t
@@ -1060,6 +1097,17 @@ default lsp-passthrough."
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none)))))
+
+(use-package sudo-edit
+  :ensure t
+  :after embark
+  :bind
+  (:map embark-file-map
+        ("s" . sudo-edit-find-file))
+  (:map embark-become-file+buffer-map
+        ("s" . sudo-edit-find-file)))
+
+
 
 ;; Consult users will also want the embark-consult package.
 (use-package embark-consult
@@ -1128,13 +1176,14 @@ default lsp-passthrough."
 
 (setq whitespace-style '(face empty tabs lines-tail trailing))
 
-(use-package go-ts-mode
+(use-package go-mode
   :ensure t
   :hook ((go-ts-mode . my-go-whitespace-style)
          (go-mode . my-go-whitespace-style)
          (before-save . gofmt-before-save))
   :config
   (setq go-ts-mode-indent-offset 2)
+
   (setq tab-width 2)
   (defun my-go-whitespace-style ()
     "Custom whitespace style for Go mode."
@@ -1236,7 +1285,7 @@ default lsp-passthrough."
 
 
 ;;(add-to-list 'load-path "~/git/copilot-chat.el")
-(use-package :request
+(use-package request
  :ensure t)
 
 (use-package copilot-chat
@@ -1258,6 +1307,12 @@ default lsp-passthrough."
   (setq lsp-tailwindcss-add-on-mode t)
   )
 
+;; (use-package flycheck-eglot
+;;   :ensure t
+;;   :after (flycheck eglot)
+;;   :config
+;;   (global-flycheck-eglot-mode 1))
+
 (use-package eglot
   :ensure t
   :init
@@ -1272,8 +1327,7 @@ default lsp-passthrough."
                            (completeFunctionCalls . t)
                            (diagnosticsTrigger . "Save")
 ;;                           (buildFlags . ["-tags e2e"])
-                           (analyses . ((fieldalignment . t)
-                                        (fillreturns . t)))
+                           (analyses . ((fillreturns . t)))
                            ;; (codelenses . ((generate . t)
                            ;;                (test . t)
                            ;;                ))
@@ -1300,7 +1354,9 @@ default lsp-passthrough."
    ("M-o" . eglot-code-actions)
    ("C-c C-p" . flymake-goto-prev-error)
    ("C-c C-n" . flymake-goto-next-error)
-   ("C-c C-e" . consult-flymake)
+   ("M-p" . flymake-goto-prev-error)
+   ("M-n" . flymake-goto-next-error)
+   ("C-c C-e" . consult-flycheck)
    ("C-c e" . eglot)
    )
   )
